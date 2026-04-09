@@ -171,14 +171,49 @@ class ProductionController extends Controller
             })->values();
         })->flatten();
 
-        // 6. Trend 7 Days (cached 60s)
-        $data7Days = Cache::remember('dashboard_7days_' . $today->format('Y-m-d'), 60, function () use ($now) {
-            return Reception::selectRaw('date, SUM(production_count) as total')
-                ->whereMonth('date', $now->month)
-                ->whereYear('date', $now->year)
-                ->groupBy('date')
+        // 6. All distinct job types (from receptions + employees)
+        $jobFromReceptions = Reception::whereNotNull('job_today')
+            ->where('job_today', '!=', '')
+            ->distinct()
+            ->pluck('job_today');
+
+        $jobFromEmployees = Employee::whereNotNull('primary_job_type')
+            ->where('primary_job_type', '!=', '')
+            ->distinct()
+            ->pluck('primary_job_type');
+
+        $allJobTypes = $jobFromReceptions->merge($jobFromEmployees)
+            ->unique()
+            ->sort()
+            ->values();
+
+        // 7. Trend 7 Days (cached 60s)
+        // Generate all 7 dates to ensure chart always has 7 data points
+        $last7Dates = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $last7Dates[] = Carbon::today()->subDays($i)->format('Y-m-d');
+        }
+
+        $data7Days = Cache::remember('dashboard_7days_' . $today->format('Y-m-d'), 60, function () use ($last7Dates) {
+            $sevenDaysAgo = Carbon::today()->subDays(6);
+
+            // Query only the last 7 days
+            $rawData = Reception::selectRaw('DATE(date) as date, SUM(production_count) as total')
+                ->where('date', '>=', $sevenDaysAgo)
+                ->groupBy(DB::raw('DATE(date)'))
                 ->orderBy('date', 'asc')
-                ->get();
+                ->get()
+                ->keyBy(function ($item) {
+                    return is_string($item->date) ? substr($item->date, 0, 10) : $item->date->format('Y-m-d');
+                });
+
+            // Fill in missing dates with 0 and cast values to int
+            return collect($last7Dates)->map(function ($d) use ($rawData) {
+                return (object) [
+                    'date'  => $d,
+                    'total' => (int) ($rawData[$d]->total ?? 0),
+                ];
+            });
         });
 
         return view('dashboard_auth', compact(
@@ -191,6 +226,7 @@ class ProductionController extends Controller
             'selectedJobPerPlant',
             'trendSeriesPerPlant',
             'trendDates',
+            'allJobTypes',
             'totalProduction',
             'totalEmployees',
             'totalRitase',
@@ -242,6 +278,69 @@ class ProductionController extends Controller
         ]);
     }
 
+    /**
+     * AJAX endpoint: return 7-day trend data filtered by job_today
+     */
+    public function trendData7Days(Request $request)
+    {
+        $job = $request->get('job');
+        $sevenDaysAgo = Carbon::today()->subDays(6);
+        $dates = [];
+        for ($i = 0; $i < 7; $i++) {
+            $dates[] = Carbon::today()->subDays(6 - $i)->format('Y-m-d');
+        }
+
+        $query = Reception::selectRaw('DATE(date) as date, SUM(production_count) as total')
+            ->where('date', '>=', $sevenDaysAgo);
+
+        if ($job && $job !== 'all') {
+            $query->where('job_today', $job);
+        }
+
+        $rawData = $query->groupBy(DB::raw('DATE(date)'))
+            ->orderBy('date', 'asc')
+            ->get()
+            ->keyBy(function ($item) {
+                return is_string($item->date) ? substr($item->date, 0, 10) : $item->date->format('Y-m-d');
+            });
+
+        $result = collect($dates)->map(function ($d) use ($rawData) {
+            return (int) ($rawData[$d]->total ?? 0);
+        })->toArray();
+
+        return response()->json([
+            'dates' => collect($dates)->map(fn($d) => date('d M', strtotime($d)))->toArray(),
+            'totals' => $result,
+        ]);
+    }
+
+    /**
+     * AJAX endpoint: return plant/group achievement data filtered by job_today
+     */
+    public function plantGroupData(Request $request)
+    {
+        $job = $request->get('job');
+        $now = Carbon::now();
+
+        $query = Reception::join('employees', 'receptions.employee_id', '=', 'employees.employee_id')
+            ->selectRaw('employees.plant, employees.group, SUM(receptions.production_count) as total')
+            ->whereMonth('receptions.date', $now->month)
+            ->whereYear('receptions.date', $now->year);
+
+        if ($job && $job !== 'all') {
+            $query->where('receptions.job_today', $job);
+        }
+
+        $allPlantData = $query->groupBy('employees.plant', 'employees.group')->get();
+
+        $result = [];
+        foreach (['B', 'H', 'I', 'T'] as $p) {
+            $result[$p] = $allPlantData->where('plant', $p)->pluck('total', 'group')->sortKeys();
+        }
+
+        return response()->json($result);
+    }
+
     public function inputForm(Request $request, $plant = null)
     {
         $group = $request->get('group');
@@ -263,6 +362,7 @@ class ProductionController extends Controller
                 'receptions.production_count',
                 'receptions.ritase_result',
                 'receptions.notes',
+                'receptions.photo',
                 'receptions.created_at',
                 'employees.name as operator_name',
                 'employees.employee_id as operator_id',
@@ -292,6 +392,7 @@ class ProductionController extends Controller
             'job_today'        => 'required|string|max:255',
             'shift'            => 'required|integer|in:1,2,3',
             'notes'            => 'nullable|string|max:1000',
+            'photo'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'ritase_result'    => $jobToday === 'Driver' ? 'required|integer|min:0' : 'nullable|integer|min:0',
             'production_count' => $jobToday === 'Driver' ? 'nullable|integer|min:0' : 'required|integer|min:0',
         ];
@@ -307,6 +408,14 @@ class ProductionController extends Controller
             'job_today'        => $request->job_today,
             'notes'            => $request->notes
         ];
+
+        // Handle photo upload
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/production'), $filename);
+            $data['photo'] = 'uploads/production/' . $filename;
+        }
 
         Reception::create($data);
 
@@ -340,14 +449,29 @@ class ProductionController extends Controller
     public function updateInput(Request $request, $plant, $id)
     {
         $reception = Reception::findOrFail($id);
-        $reception->update([
+
+        $updateData = [
             'employee_id'      => $request->employee_id,
             'shift'            => $request->shift,
             'job_today'        => $request->job_today,
             'production_count' => $request->production_count,
             'ritase_result'    => $request->ritase_result,
             'notes'            => $request->notes,
-        ]);
+        ];
+
+        // Handle photo upload on edit
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($reception->photo && file_exists(public_path($reception->photo))) {
+                unlink(public_path($reception->photo));
+            }
+            $file = $request->file('photo');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $file->move(public_path('uploads/production'), $filename);
+            $updateData['photo'] = 'uploads/production/' . $filename;
+        }
+
+        $reception->update($updateData);
 
         // Clear caches on data change
         Cache::flush();

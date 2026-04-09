@@ -66,6 +66,29 @@
         .monitoring-table .col-hasil { width: 120px; text-align: right; }
         .monitoring-table .col-ritase { width: 100px; text-align: right; }
         .monitoring-table .col-aksi { width: 100px; text-align: center; }
+        .monitoring-table .col-foto { width: 80px; text-align: center; }
+        .photo-thumb {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .photo-thumb:hover {
+            transform: scale(1.8);
+            z-index: 10;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .photo-preview-input {
+            width: 64px;
+            height: 64px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 2px solid #0d6efd;
+        }
 
         @media (max-width: 768px) {
             @if($hasDriver)
@@ -193,7 +216,7 @@
                         </div>
                     @endif
 
-                    <form action="{{ route('input.store', $plant ?? 'B') }}" method="POST" id="production-form">
+                    <form action="{{ route('input.store', $plant ?? 'B') }}" method="POST" id="production-form" enctype="multipart/form-data">
                         @csrf
                         <input type="hidden" name="group" value="{{ request('group') }}">
                         <div class="row g-3">
@@ -213,7 +236,7 @@
                                          style="max-height: 220px; z-index: 100; display: none;">
                                         @foreach ($employees as $employee)
                                             @php $alreadyInputted = in_array($employee->employee_id, $inputtedIds); @endphp
-                                             <div class="operator-option px-3 py-2{{ $alreadyInputted ? ' opacity-50' : '' }}"
+                                            <div class="operator-option px-3 py-2{{ $alreadyInputted ? ' opacity-50' : '' }}"
                                                  style="cursor: {{ $alreadyInputted ? 'not-allowed' : 'pointer' }};"
                                                  data-id="{{ $employee->employee_id }}" data-name="{{ $employee->name }}"
                                                  data-inputted="{{ $alreadyInputted ? 'true' : 'false' }}">
@@ -286,6 +309,17 @@
                                 </div>
                             </div>
 
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-uppercase text-muted">Lampiran Foto (Opsional)</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0"><i data-lucide="camera" size="18"></i></span>
+                                        <input type="file" name="photo" id="photo-input" class="form-control border-start-0 shadow-none" accept="image/*">
+                                    </div>
+                                    <img id="photo-preview" src="" alt="Preview" class="photo-preview-input" style="display:none;">
+                                </div>
+                            </div>
+
                             <div class="col-12 mt-3">
                                 <button type="submit" class="btn btn-primary w-100 py-3 fw-bold shadow-sm">
                                     <i data-lucide="send" class="me-2" size="20"></i> SIMPAN DATA
@@ -318,6 +352,7 @@
                                     <th class="col-shift">Shift</th>
                                     <th class="col-hasil">Hasil</th>
                                     <th class="col-ritase ritase-col">Ritase</th>
+                                    <th class="col-foto">Foto</th>
                                     <th class="py-3 d-md-none text-center" style="width: 100px;">Catatan</th>
                                     <th class="col-aksi">Aksi</th>
                                 </tr>
@@ -345,6 +380,13 @@
                                         <td data-label="Shift" class="col-shift">Shift {{ $data->shift }}</td>
                                         <td data-label="Hasil" class="col-hasil">{{ number_format($data->production_count) }}</td>
                                         <td data-label="Ritase" class="col-ritase ritase-col">{{ $data->ritase_result ?? 0 }}</td>
+                                        <td data-label="Foto" class="col-foto">
+                                            @if($data->photo)
+                                                <img src="{{ asset($data->photo) }}" alt="Foto" class="photo-thumb">
+                                            @else
+                                                <span class="text-muted small">-</span>
+                                            @endif
+                                        </td>
                                         <td data-label="Catatan" class="d-md-none text-center">
                                             <div class="small text-muted">{{ $data->notes ?? '-' }}</div>
                                         </td>
@@ -357,7 +399,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="{{ $hasDriver ? 7 : 6 }}" class="text-center py-5 text-muted">Belum ada data.</td>
+                                        <td colspan="{{ $hasDriver ? 9 : 8 }}" class="text-center py-5 text-muted">Belum ada data.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
@@ -488,5 +530,20 @@
         };
 
         document.addEventListener('DOMContentLoaded', toggleRitase);
+
+        // === PHOTO PREVIEW ===
+        document.getElementById('photo-input').addEventListener('change', function(e) {
+            var preview = document.getElementById('photo-preview');
+            if (this.files && this.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    preview.src = ev.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                preview.style.display = 'none';
+            }
+        });
     </script>
 @endsection

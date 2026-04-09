@@ -13,7 +13,8 @@ class Reception extends Model
         'date',
         'production_count',
         'job_today',
-        'notes'
+        'notes',
+        'photo'
     ];
 
     protected $casts = [

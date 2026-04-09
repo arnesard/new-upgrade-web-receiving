@@ -17,6 +17,8 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth'])->group(function () {
     Route::get('/', [ProductionController::class, 'dashboard'])->name('dashboard');
     Route::get('/api/trend-data', [ProductionController::class, 'trendData'])->name('api.trend-data');
+    Route::get('/api/trend-7days', [ProductionController::class, 'trendData7Days'])->name('api.trend-7days');
+    Route::get('/api/plant-group', [ProductionController::class, 'plantGroupData'])->name('api.plant-group');
 
     // Production input routes
     Route::get('/input/{plant?}', [ProductionController::class, 'inputForm'])->name('input.form');
