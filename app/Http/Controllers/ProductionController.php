@@ -109,6 +109,7 @@ class ProductionController extends Controller
                 'receptions.notes',
                 'receptions.date',
                 'receptions.created_at',
+                'receptions.job_today',
                 'employees.plant',
                 'employees.name as operator_name',
                 'employees.group as group',
@@ -183,6 +184,7 @@ class ProductionController extends Controller
             ->pluck('primary_job_type');
 
         $allJobTypes = $jobFromReceptions->merge($jobFromEmployees)
+            ->map(fn($j) => trim($j))
             ->unique()
             ->sort()
             ->values();

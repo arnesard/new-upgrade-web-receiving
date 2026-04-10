@@ -443,23 +443,28 @@
                 <i data-lucide="clipboard-list"></i> <span>Input</span>
             </a>
 
-            <a href="{{ route('employees.index') }}"
-                class="header-nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-                <i data-lucide="users"></i> <span>Karyawan</span>
-            </a>
+            @if (auth()->user()->isAdmin())
+                <a href="{{ route('employees.index') }}"
+                    class="header-nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+                    <i data-lucide="users"></i> <span>Karyawan</span>
+                </a>
+            @endif
 
             <a href="{{ route('overtime.index') }}"
                 class="header-nav-link {{ request()->routeIs('overtime.*') ? 'active' : '' }}">
                 <i data-lucide="clock"></i> <span>Lembur</span>
             </a>
-            <a href="{{ route('reports.index') }}"
-                class="header-nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-                <i data-lucide="files"></i> <span>Laporan</span>
-            </a>
-            <a href="{{ route('users.index') }}"
-                class="header-nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                <i data-lucide="shield"></i> <span>User</span>
-            </a>
+
+            @if (auth()->user()->isAdmin())
+                <a href="{{ route('reports.index') }}"
+                    class="header-nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                    <i data-lucide="files"></i> <span>Laporan</span>
+                </a>
+                <a href="{{ route('users.index') }}"
+                    class="header-nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                    <i data-lucide="shield"></i> <span>User</span>
+                </a>
+            @endif
         </nav>
 
         {{-- User area (desktop) --}}
@@ -509,22 +514,26 @@
             <i data-lucide="clipboard-list"></i> Input
         </a>
         <div class="mobile-menu-divider"></div>
-        <a href="{{ route('employees.index') }}"
-            class="mobile-nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
-            <i data-lucide="users"></i> Karyawan
-        </a>
+        @if (auth()->user()->isAdmin())
+            <a href="{{ route('employees.index') }}"
+                class="mobile-nav-link {{ request()->routeIs('employees.*') ? 'active' : '' }}">
+                <i data-lucide="users"></i> Karyawan
+            </a>
+        @endif
         <a href="{{ route('overtime.index') }}"
             class="mobile-nav-link {{ request()->routeIs('overtime.*') ? 'active' : '' }}">
             <i data-lucide="clock"></i> Lembur
         </a>
-        <a href="{{ route('reports.index') }}"
-            class="mobile-nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-            <i data-lucide="files"></i> Laporan
-        </a>
-        <a href="{{ route('users.index') }}"
-            class="mobile-nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-            <i data-lucide="shield"></i> Kelola User
-        </a>
+        @if (auth()->user()->isAdmin())
+            <a href="{{ route('reports.index') }}"
+                class="mobile-nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                <i data-lucide="files"></i> Laporan
+            </a>
+            <a href="{{ route('users.index') }}"
+                class="mobile-nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                <i data-lucide="shield"></i> Kelola User
+            </a>
+        @endif
         <div class="mobile-menu-divider"></div>
         <div class="mobile-user-section">
             <div>
@@ -572,10 +581,15 @@
     @stack('scripts')
 
     <script>
+        // Register Service Worker for PWA
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js')
-                .then(reg => console.log('SW registered:', reg))
-                .catch(err => console.log('SW failed:', err));
+            navigator.serviceWorker.register('/web_receiving/public/sw.js')
+                .then(function(reg) {
+                    console.log('SW registered');
+                })
+                .catch(function(err) {
+                    console.log('SW registration failed:', err);
+                });
         }
     </script>
 </body>

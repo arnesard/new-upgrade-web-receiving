@@ -16,15 +16,18 @@ class OvertimeController extends Controller
             ->orderBy('overtime_date', 'desc')
             ->limit(500)
             ->get();
-        return view('overtime.index', compact('overtimes'));
+
+        $employees = Employee::orderBy('name')->get();
+
+        return view('overtime.index', compact('overtimes', 'employees'));
     }
-    
+
     public function create()
     {
         $employees = Employee::orderBy('name')->get();
         return view('overtime.create', compact('employees'));
     }
-    
+
     public function store(Request $request)
     {
         $request->validate([
@@ -34,7 +37,7 @@ class OvertimeController extends Controller
             'end_time' => 'required|date_format:H:i',
             'reason' => 'required|string|max:1000',
         ]);
-        
+
         OvertimeData::create([
             'employee_name' => $request->employee_name,
             'overtime_date' => $request->overtime_date,
@@ -43,11 +46,11 @@ class OvertimeController extends Controller
             'reason' => $request->reason,
             'status' => 'pending',
         ]);
-        
+
         return redirect()->route('overtime.index')
             ->with('success', 'Pengajuan lembur berhasil dikirim!');
     }
-    
+
     public function approve(OvertimeData $overtime)
     {
         $overtime->update([
@@ -55,31 +58,31 @@ class OvertimeController extends Controller
             'approved_by' => auth()->id(),
             'notes' => 'Disetujui oleh ' . auth()->user()->name,
         ]);
-        
+
         return redirect()->route('overtime.index')
             ->with('success', 'Pengajuan lembur disetujui!');
     }
-    
+
     public function reject(Request $request, OvertimeData $overtime)
     {
         $request->validate([
             'notes' => 'required|string|max:1000',
         ]);
-        
+
         $overtime->update([
             'status' => 'rejected',
             'approved_by' => auth()->id(),
             'notes' => 'Ditolak: ' . $request->notes,
         ]);
-        
+
         return redirect()->route('overtime.index')
             ->with('success', 'Pengajuan lembur ditolak!');
     }
-    
+
     public function destroy(OvertimeData $overtime)
     {
         $overtime->delete();
-        
+
         return redirect()->route('overtime.index')
             ->with('success', 'Pengajuan lembur dihapus!');
     }
