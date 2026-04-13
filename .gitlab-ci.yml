@@ -1,0 +1,10 @@
+image: php:8.2
+
+stages:
+  - build
+
+build-job:
+  stage: build
+  script:
+    - php -v
+    - composer install
