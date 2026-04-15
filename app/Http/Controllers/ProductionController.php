@@ -387,27 +387,37 @@ class ProductionController extends Controller
 
     public function storeInput(Request $request, $plant)
     {
-        $jobToday = $request->input('job_today');
+        // job_today dikirim sebagai array dari checkboxes
+        $jobTodayArray  = $request->input('job_today', []);
+        $jobTodayString = implode(',', array_filter(array_map('trim', (array)$jobTodayArray)));
+        $isDriver       = in_array('Driver', (array)$jobTodayArray);
+        $onlyDriver     = count($jobTodayArray) === 1 && $isDriver;
 
         $rules = [
             'employee_id'      => 'required|string|max:255',
-            'job_today'        => 'required|string|max:255',
+            'job_today'        => 'required|array|min:1',
+            'job_today.*'      => 'string|max:100',
             'shift'            => 'required|integer|in:1,2,3',
+            'date'             => 'required|date|before_or_equal:today',
             'notes'            => 'nullable|string|max:1000',
             'photo'            => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
-            'ritase_result'    => $jobToday === 'Driver' ? 'required|integer|min:0' : 'nullable|integer|min:0',
-            'production_count' => $jobToday === 'Driver' ? 'nullable|integer|min:0' : 'required|integer|min:0',
+            'ritase_result'    => 'nullable|integer|min:0',
+            'production_count' => !$onlyDriver ? 'required|integer|min:0' : 'nullable|integer|min:0',
         ];
 
         $request->validate($rules);
+
+        // Gunakan tanggal dari form (operator bisa pilih manual untuk input terlambat)
+        // Default sudah diset di view: hari ini untuk shift 1&2, kemarin untuk shift 3
+        $inputDate = $request->date ? Carbon::parse($request->date) : Carbon::today();
 
         $data = [
             'employee_id'      => $request->employee_id,
             'shift'            => $request->shift,
             'ritase_result'    => $request->ritase_result ?? 0,
-            'date'             => Carbon::today(),
+            'date'             => $inputDate,
             'production_count' => $request->production_count ?? 0,
-            'job_today'        => $request->job_today,
+            'job_today'        => $jobTodayString,
             'notes'            => $request->notes
         ];
 
@@ -452,10 +462,14 @@ class ProductionController extends Controller
     {
         $reception = Reception::findOrFail($id);
 
+        // job_today dikirim sebagai array dari checkboxes
+        $jobTodayArray  = $request->input('job_today', []);
+        $jobTodayString = implode(',', array_filter(array_map('trim', (array)$jobTodayArray)));
+
         $updateData = [
             'employee_id'      => $request->employee_id,
             'shift'            => $request->shift,
-            'job_today'        => $request->job_today,
+            'job_today'        => $jobTodayString,
             'production_count' => $request->production_count,
             'ritase_result'    => $request->ritase_result,
             'notes'            => $request->notes,
@@ -479,5 +493,22 @@ class ProductionController extends Controller
         Cache::flush();
 
         return redirect()->route('input.form', $plant)->with('success', 'Data berhasil direvisi!');
+    }
+
+    // 3. Fungsi hapus data produksi
+    public function deleteInput($plant, $id)
+    {
+        $reception = Reception::findOrFail($id);
+
+        // Hapus foto jika ada
+        if ($reception->photo && file_exists(public_path($reception->photo))) {
+            unlink(public_path($reception->photo));
+        }
+
+        $reception->delete();
+
+        Cache::flush();
+
+        return redirect()->route('input.form', $plant)->with('success', 'Data berhasil dihapus!');
     }
 }

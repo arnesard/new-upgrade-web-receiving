@@ -21,18 +21,18 @@ class ReportController extends Controller
         $plant_filter = $request->get('plant', '');
         $group_filter = $request->get('group', '');
         $operator_name = trim($request->get('operator_name', ''));
-        
+
         $date = $request->get('date', Carbon::today()->format('Y-m-d'));
-        
+
         // Default range: 7 days ago until today if not specified
         $default_start = Carbon::parse($date)->subDays(7)->format('Y-m-d');
         $start_date = $request->get('start_date', $default_start);
         $end_date = $request->get('end_date', $date);
-        
+
         $month = $request->get('month', Carbon::now()->format('Y-m'));
         $start_month = $request->get('start_month', $month);
         $end_month = $request->get('end_month', $month);
-        
+
         $year = $request->get('year', Carbon::now()->format('Y'));
 
         $receptions = $this->getFilteredReceptions($filterType, $shift, $plant_filter, $group_filter, $start_date, $end_date, $start_month, $end_month, $year, $operator_name);
@@ -51,7 +51,7 @@ class ReportController extends Controller
                             'ritase' => $employeeGroup->sum('ritase_result'),
                         ];
                     })
-                    ->sortByDesc(function($item) {
+                    ->sortByDesc(function ($item) {
                         return $item['production'] + $item['ritase'];
                     });
             })
@@ -76,7 +76,7 @@ class ReportController extends Controller
                             'ritase' => $group->sum('ritase_result'),
                         ];
                     })
-                    ->sortByDesc(function($item) {
+                    ->sortByDesc(function ($item) {
                         return $item['production'] + $item['ritase'];
                     });
             })
@@ -124,8 +124,9 @@ class ReportController extends Controller
                 'receptions.date',
                 'receptions.job_today',
                 'receptions.notes',
-                'employees.name as emp_name', 
-                'employees.plant as emp_plant', 
+                'receptions.photo',
+                'employees.name as emp_name',
+                'employees.plant as emp_plant',
                 'employees.group as emp_group'
             );
 
@@ -154,10 +155,10 @@ class ReportController extends Controller
         }
 
         if ($operator_name) {
-            $query->where(function($q) use ($operator_name) {
+            $query->where(function ($q) use ($operator_name) {
                 $term = '%' . strtolower($operator_name) . '%';
                 $q->whereRaw('LOWER(employees.name) LIKE ?', [$term]) // Name from employees table
-                  ->orWhereRaw('LOWER(receptions.employee_id) LIKE ?', [$term]); // ID from receptions table
+                    ->orWhereRaw('LOWER(receptions.employee_id) LIKE ?', [$term]); // ID from receptions table
             });
         }
 
@@ -208,7 +209,7 @@ class ReportController extends Controller
                 return $employeeNamesQuery->pluck('name')->toArray();
             });
 
-            $query->where(function($q) use ($names, $operator_name) {
+            $query->where(function ($q) use ($names, $operator_name) {
                 if (!empty($names)) {
                     $q->whereIn('employee_name', $names);
                 } else if ($operator_name) {
@@ -250,22 +251,22 @@ class ReportController extends Controller
         $shift = $request->get('shift', '');
         $plant_filter = $request->get('plant', '');
         $group_filter = $request->get('group', '');
-        
+
         $date = $request->get('date', Carbon::today()->format('Y-m-d'));
         $start_date = $request->get('start_date', $date);
         $end_date = $request->get('end_date', $date);
-        
+
         $month = $request->get('month', Carbon::now()->format('Y-m'));
         $start_month = $request->get('start_month', $month);
         $end_month = $request->get('end_month', $month);
-        
+
         $year = $request->get('year', Carbon::now()->format('Y'));
 
         $receptions = $this->getFilteredReceptions($filterType, $shift, $plant_filter, $group_filter, $start_date, $end_date, $start_month, $end_month, $year);
         $overtimes = $this->getFilteredOvertimes($filterType, $plant_filter, $group_filter, $start_date, $end_date, $start_month, $end_month, $year);
 
         return Excel::download(
-            new ReportsExport($receptions, $overtimes), 
+            new ReportsExport($receptions, $overtimes),
             'laporan_receiving_' . $filterType . '_' . date('Y-m-d') . '.xlsx'
         );
     }
