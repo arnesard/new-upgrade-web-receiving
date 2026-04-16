@@ -32,7 +32,8 @@ class User extends Authenticatable
 
     public function isLeader(): bool
     {
-        return $this->role === 'leader';
+        // Hanya role 'adh' yang dibatasi sebagai leader
+        return $this->role === 'adh';
     }
 
     /**
