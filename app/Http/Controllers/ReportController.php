@@ -4,12 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Reception;
-use App\Models\OvertimeData;
 use App\Models\Employee;
 use App\Exports\ReportsExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
-use PDF;
 use Illuminate\Support\Facades\Cache;
 
 class ReportController extends Controller
@@ -21,7 +19,7 @@ class ReportController extends Controller
         $plant_filter = $request->get('plant', '');
         $group_filter = $request->get('group', '');
         $operator_name = trim($request->get('operator_name', ''));
-
+        $job_today = $request->get('job_today', '');
         $date = $request->get('date', Carbon::today()->format('Y-m-d'));
 
         // Default range: 7 days ago until today if not specified
@@ -35,10 +33,7 @@ class ReportController extends Controller
 
         $year = $request->get('year', Carbon::now()->format('Y'));
 
-        $receptions = $this->getFilteredReceptions($filterType, $shift, $plant_filter, $group_filter, $start_date, $end_date, $start_month, $end_month, $year, $operator_name);
-        $overtimes = $this->getFilteredOvertimes($filterType, $plant_filter, $group_filter, $start_date, $end_date, $start_month, $end_month, $year, $operator_name);
-
-        $stats = $this->calculateStats($receptions, $overtimes);
+        $receptions = $this->getFilteredReceptions($filterType, $shift, $plant_filter, $group_filter, $job_today, $start_date, $end_date, $start_month, $end_month, $year, $operator_name);
 
         // Calculate Rankings based on the JOIN results to ensure perfect sync
         $operatorRanking = $receptions->groupBy('emp_plant')
@@ -53,9 +48,11 @@ class ReportController extends Controller
                     })
                     ->sortByDesc(function ($item) {
                         return $item['production'] + $item['ritase'];
-                    });
+                    })
+                    ->values()
+                    ->toArray();
             })
-            ->sortKeys();
+            ->toArray(); // 🔥 PENTING
 
         $plantRanking = $receptions->groupBy('emp_plant')
             ->map(function ($group, $key) {
@@ -76,21 +73,24 @@ class ReportController extends Controller
                             'ritase' => $group->sum('ritase_result'),
                         ];
                     })
-                    ->sortByDesc(function ($item) {
-                        return $item['production'] + $item['ritase'];
-                    });
+                    ->values() // 🔥 PENTING: ubah ke array indexed
+                    ->toArray(); // 🔥 PENTING
             })
-            ->sortKeys();
+            ->toArray(); // 🔥 PENTING
 
         // Get unique employee names for autocomplete — cached 5 minutes
         $all_employee_names = Cache::remember('all_employee_names', 300, function () {
             return Employee::orderBy('name')->distinct()->pluck('name');
         });
 
+        $all_jobs = Reception::select('job_today')
+            ->whereNotNull('job_today')
+            ->distinct()
+            ->orderBy('job_today')
+            ->pluck('job_today');
+
         return view('reports.index', compact(
             'receptions',
-            'overtimes',
-            'stats',
             'operatorRanking',
             'plantRanking',
             'groupRanking',
@@ -99,7 +99,9 @@ class ReportController extends Controller
             'shift',
             'plant_filter',
             'group_filter',
+            'all_jobs',
             'operator_name',
+            'job_today',
             'date',
             'start_date',
             'end_date',
@@ -110,7 +112,7 @@ class ReportController extends Controller
         ));
     }
 
-    private function getFilteredReceptions($filterType, $shift, $plant, $group, $start_date, $end_date, $start_month, $end_month, $year, $operator_name = '')
+    private function getFilteredReceptions($filterType, $shift, $plant, $group, $job_today, $start_date, $end_date, $start_month, $end_month, $year, $operator_name = '')
     {
         // COMPLIANCE: Use explicit Joins and Table-qualified columns
         $query = Reception::query()
@@ -161,88 +163,13 @@ class ReportController extends Controller
                     ->orWhereRaw('LOWER(receptions.employee_id) LIKE ?', [$term]); // ID from receptions table
             });
         }
-
+        if ($job_today) {
+            $query->where('receptions.job_today', 'like', '%' . $job_today . '%');
+        }
         return $query->orderBy('receptions.date', 'desc')
             ->orderBy('receptions.created_at', 'desc')
             ->limit(1000) // Safety limit to prevent memory exhaustion
             ->get();
-    }
-
-    private function getFilteredOvertimes($filterType, $plant, $group, $start_date, $end_date, $start_month, $end_month, $year, $operator_name = '')
-    {
-        $query = OvertimeData::query()
-            ->select('id', 'employee_name', 'overtime_date', 'start_time', 'end_time', 'reason', 'status', 'notes', 'approved_by');
-
-        switch ($filterType) {
-            case 'daily':
-                if ($start_date === $end_date) {
-                    $query->whereDate('overtime_date', $start_date);
-                } else {
-                    $query->whereBetween('overtime_date', [$start_date, $end_date]);
-                }
-                break;
-            case 'monthly':
-                $start = Carbon::parse($start_month . '-01')->startOfMonth();
-                $end = Carbon::parse($end_month . '-01')->endOfMonth();
-                $query->whereBetween('overtime_date', [$start, $end]);
-                break;
-            case 'yearly':
-                $query->whereYear('overtime_date', $year);
-                break;
-            case 'all':
-            default:
-                // No date restriction
-                break;
-        }
-
-        // Apply plant/group/operator filters
-        if ($plant || $group || $operator_name) {
-            // Cache the employee names lookup for 60 seconds
-            $cacheKey = 'emp_names_' . md5($plant . $group . $operator_name);
-            $names = Cache::remember($cacheKey, 60, function () use ($plant, $group, $operator_name) {
-                $employeeNamesQuery = Employee::query();
-                if ($plant) $employeeNamesQuery->where('plant', $plant);
-                if ($group) $employeeNamesQuery->where('group', $group);
-                if ($operator_name) {
-                    $employeeNamesQuery->whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($operator_name) . '%']);
-                }
-                return $employeeNamesQuery->pluck('name')->toArray();
-            });
-
-            $query->where(function ($q) use ($names, $operator_name) {
-                if (!empty($names)) {
-                    $q->whereIn('employee_name', $names);
-                } else if ($operator_name) {
-                    $q->whereRaw('LOWER(employee_name) LIKE ?', ['%' . strtolower($operator_name) . '%']);
-                } else {
-                    $q->whereRaw('1 = 0');
-                }
-            });
-        }
-
-        return $query->orderBy('overtime_date', 'desc')
-            ->limit(500) // Safety limit
-            ->get();
-    }
-
-    private function calculateStats($receptions, $overtimes)
-    {
-        return [
-            'total_production' => $receptions->sum('production_count'),
-            'total_employees' => $receptions->unique('employee_id')->count(),
-            'total_ritase' => $receptions->sum('ritase_result'),
-            'total_overtime_hours' => $overtimes->filter(fn($ot) => $ot->status == 'approved')->sum(function ($overtime) {
-                $start = Carbon::parse($overtime->start_time);
-                $end = Carbon::parse($overtime->end_time);
-                if ($end->lt($start)) $end->addDay();
-                $gross = $start->diffInHours($end);
-                return min(7, $gross);
-            }),
-            'approved_overtimes' => $overtimes->where('status', 'approved')->count(),
-            'pending_overtimes' => $overtimes->where('status', 'pending')->count(),
-            'rejected_overtimes' => $overtimes->where('status', 'rejected')->count(),
-            'total_receptions' => $receptions->count(),
-        ];
     }
 
     public function exportExcel(Request $request)
@@ -263,11 +190,11 @@ class ReportController extends Controller
         $year = $request->get('year', Carbon::now()->format('Y'));
 
         $receptions = $this->getFilteredReceptions($filterType, $shift, $plant_filter, $group_filter, $start_date, $end_date, $start_month, $end_month, $year);
-        $overtimes = $this->getFilteredOvertimes($filterType, $plant_filter, $group_filter, $start_date, $end_date, $start_month, $end_month, $year);
+
 
         return Excel::download(
-            new ReportsExport($receptions, $overtimes),
-            'laporan_receiving_' . $filterType . '_' . date('Y-m-d') . '.xlsx'
+            new \App\Exports\ProductionExport($receptions),
+            'laporan_produksi_' . $filterType . '_' . date('Y-m-d') . '.xlsx'
         );
     }
 }

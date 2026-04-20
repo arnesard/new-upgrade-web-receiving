@@ -12,7 +12,7 @@
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm h-100 rounded-4">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between">
@@ -27,7 +27,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm h-100 rounded-4">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between">
@@ -42,22 +42,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm h-100 rounded-4">
-                <div class="card-body p-3">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <p class="text-muted small fw-bold text-uppercase mb-1">Total Ritase</p>
-                            <h3 class="fw-bold mb-0">{{ number_format($totalRitase) }}</h3>
-                        </div>
-                        <div class="rounded-3 p-3 bg-warning bg-opacity-10 text-warning">
-                            <i data-lucide="truck" size="24"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="card border-0 shadow-sm h-100 rounded-4">
                 <div class="card-body p-3">
                     <div class="d-flex align-items-center justify-content-between">
@@ -194,13 +179,11 @@
             <table class="table table-hover" id="productionTable">
                 <thead>
                     <tr>
-                        <th>Plant</th>
                         <th>Operator</th>
                         <th>Group</th>
                         <th>Shift</th>
                         <th>Pekerjaan</th>
                         <th>Plan</th>
-                        <th>Ritase</th>
                         <th>Produksi</th>
                         <th>Catatan</th>
                     </tr>
@@ -208,12 +191,11 @@
                 <tbody>
                     @forelse($receptions as $reception)
                         <tr>
-                            <td><span class="badge bg-primary">{{ $reception->plant }}</span></td>
                             <td>{{ $reception->operator_name }}</td>
                             <td>{{ $reception->group }}</td>
                             <td>Shift {{ $reception->shift }}</td>
                             {{-- TAMPILKAN SCAN/STRIPPING/DLL DI SINI --}}
-                            <td>{{ $reception->job_type }}</td>
+                            <td>{{ $reception->job_today }}</td>
                             <td>
                                 @php
                                     $planColors = [
@@ -228,7 +210,6 @@
                                     Plan {{ $reception->plant }}
                                 </span>
                             </td>
-                            <td>{{ $reception->ritase_result ?? '-' }}</td>
                             <td>{{ number_format($reception->production_count) }}</td>
                             <td>{{ $reception->notes ?? '-' }}</td>
                         </tr>
@@ -255,6 +236,56 @@
         var mainChart = null;
         var plantCharts = {};
 
+        function setupLegendHighlight(chart, names, dataSeries, colorsArray) {
+            chart.off('legendselectchanged');
+            var activeFocus = null;
+
+            chart.on('legendselectchanged', function(params) {
+                var clickedName = params.name;
+                var selectedObj = {};
+                names.forEach(function(n) {
+                    selectedObj[n] = true;
+                });
+
+                if (activeFocus === clickedName) {
+                    activeFocus = null;
+                } else {
+                    activeFocus = clickedName;
+                }
+
+                var newSeries = names.map(function(name, idx) {
+                    var isGrey = (activeFocus !== null && name !== activeFocus);
+                    var color = isGrey ? '#e2e8f0' : colorsArray[idx % colorsArray.length];
+                    var width = isGrey ? 1 : 3;
+                    var zLevel = isGrey ? 0 : 10;
+
+                    return {
+                        name: name,
+                        type: 'line',
+                        data: dataSeries[name],
+                        smooth: true,
+                        symbol: 'circle',
+                        symbolSize: isGrey ? 3 : 8,
+                        itemStyle: {
+                            color: color
+                        },
+                        lineStyle: {
+                            width: width,
+                            color: color
+                        },
+                        z: zLevel
+                    };
+                });
+
+                chart.setOption({
+                    legend: {
+                        selected: selectedObj
+                    },
+                    series: newSeries
+                });
+            });
+        }
+
         function applyIndividualFilter(param, value) {
             // param = "job_b", value = "Scan"
             var plant = param.replace('job_', '').toUpperCase();
@@ -275,12 +306,12 @@
                             data: data.series[name],
                             smooth: true,
                             symbol: 'circle',
-                            symbolSize: 6,
+                            symbolSize: 8,
                             itemStyle: {
                                 color: chartColors[idx % chartColors.length]
                             },
                             lineStyle: {
-                                width: 2
+                                width: 3
                             }
                         };
                     });
@@ -329,6 +360,8 @@
                         },
                         series: series
                     }, true); // true = replace all, don't merge old series
+
+                    setupLegendHighlight(chart, names, data.series, chartColors);
                 });
         }
 
@@ -609,12 +642,12 @@
                         data: plantData[name],
                         smooth: true,
                         symbol: 'circle',
-                        symbolSize: 6,
+                        symbolSize: 8,
                         itemStyle: {
                             color: colors[idx % colors.length]
                         },
                         lineStyle: {
-                            width: 2
+                            width: 3
                         }
                     };
                 });
@@ -663,6 +696,8 @@
                     },
                     series: series
                 });
+
+                setupLegendHighlight(chart, names, plantData, colors);
 
                 perfCharts[plant] = chart;
             });

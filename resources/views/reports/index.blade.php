@@ -129,7 +129,8 @@
         .table-modern table th {
             background: var(--slate-50);
             color: var(--slate-600);
-            font-weight: 600;
+            font-weight: 700 !important;
+            color: #000000;
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
@@ -357,12 +358,19 @@
                     </p>
                 </div>
             </div>
-            <div class="d-flex gap-2 no-print">
-                <button class="btn btn-outline-primary rounded-pill px-4 fw-bold transition-all hover-lift"
-                    onclick="window.print()" type="button">
-                    <i data-lucide="printer" class="me-2" size="18"></i> Cetak Laporan
+            <div class="d-flex gap-2 ms-auto no-print">
+                <button onclick="exportTableToCSV()"
+                    class="btn btn-outline-primary rounded-pill px-4 fw-bold transition-all hover-lift" type="button">
+                    <i data-lucide="file-text" class="me-2" size="18"></i>
+                    Export CSV
+                </button>
+                <button onclick="exportTableToExcel()"
+                    class="btn btn-success rounded-pill px-4 fw-bold transition-all hover-lift" type="button">
+                    <i data-lucide="download" class="me-2" size="18"></i>
+                    Export Excel
                 </button>
             </div>
+
         </div>
     </div>
 
@@ -386,56 +394,82 @@
     <div class="filter-card mb-4 no-print">
         {{-- Row 1: Common Filters --}}
         <div class="row g-3">
-            <div class="col-md-3">
+
+            <!-- TIPE FILTER -->
+            <div class="col-md-2">
                 <label class="filter-label">
-                    <i data-lucide="layers-3" size="14"></i> Tipe Filter
+                    <i data-lucide="layers-3" size="14"></i> Tipe
                 </label>
-                <select name="filter_type" id="filterType" class="form-control form-control-custom"
+                <select id="filterType" class="form-control form-control-custom"
                     onchange="updateFilters(); applyFilters();">
                     <option value="daily" {{ $filterType == 'daily' ? 'selected' : '' }}>Harian</option>
                     <option value="monthly" {{ $filterType == 'monthly' ? 'selected' : '' }}>Bulanan</option>
                     <option value="yearly" {{ $filterType == 'yearly' ? 'selected' : '' }}>Tahunan</option>
-                    <option value="all" {{ $filterType == 'all' ? 'selected' : '' }}>Semua Waktu (All Time) - Rekomendasi
-                        Cari Nama</option>
+                    <option value="all" {{ $filterType == 'all' ? 'selected' : '' }}>Semua</option>
                 </select>
             </div>
-            <div class="col-md-3">
+
+            <!-- SHIFT -->
+            <div class="col-md-2">
                 <label class="filter-label">
                     <i data-lucide="clock-4" size="14"></i> Shift
                 </label>
-                <select name="shift" id="shiftFilter" class="form-control form-control-custom" onchange="applyFilters()">
-                    <option value="">Semua Shift</option>
-                    <option value="1" {{ $shift == '1' ? 'selected' : '' }}>Shift 1</option>
-                    <option value="2" {{ $shift == '2' ? 'selected' : '' }}>Shift 2</option>
-                    <option value="3" {{ $shift == '3' ? 'selected' : '' }}>Shift 3</option>
+                <select id="shiftFilter" class="form-control form-control-custom" onchange="applyFilters()">
+                    <option value="">Semua</option>
+                    <option value="1" {{ $shift == '1' ? 'selected' : '' }}>1</option>
+                    <option value="2" {{ $shift == '2' ? 'selected' : '' }}>2</option>
+                    <option value="3" {{ $shift == '3' ? 'selected' : '' }}>3</option>
                 </select>
             </div>
-            <div class="col-md-3">
+
+            <!-- PLANT -->
+            <div class="col-md-2">
                 <label class="filter-label">
                     <i data-lucide="factory" size="14"></i> Plant
                 </label>
-                <select name="plant" id="plantFilter" class="form-control form-control-custom" onchange="applyFilters()">
-                    <option value="">Semua Plant</option>
+                <select id="plantFilter" class="form-control form-control-custom" onchange="applyFilters()">
+                    <option value="">Semua</option>
                     @foreach (['B', 'H', 'I', 'T'] as $p)
-                        <option value="{{ $p }}" {{ $plant_filter == $p ? 'selected' : '' }}>Plant
-                            {{ $p }}</option>
+                        <option value="{{ $p }}" {{ $plant_filter == $p ? 'selected' : '' }}>
+                            {{ $p }}
+                        </option>
                     @endforeach
                 </select>
             </div>
-            <div class="col-md-3">
+
+            <!-- GRUP -->
+            <div class="col-md-2">
                 <label class="filter-label">
                     <i data-lucide="users-2" size="14"></i> Grup
                 </label>
-                <select name="group" id="groupFilter" class="form-control form-control-custom" onchange="applyFilters()">
-                    <option value="">Semua Grup</option>
+                <select id="groupFilter" class="form-control form-control-custom" onchange="applyFilters()">
+                    <option value="">Semua</option>
                     @foreach (['A', 'B', 'C', 'D'] as $g)
-                        <option value="{{ $g }}" {{ $group_filter == $g ? 'selected' : '' }}>Grup
-                            {{ $g }}</option>
+                        <option value="{{ $g }}" {{ $group_filter == $g ? 'selected' : '' }}>
+                            {{ $g }}
+                        </option>
                     @endforeach
                 </select>
             </div>
-        </div>
 
+            <!-- PEKERJAAN (lebih panjang biar proporsional) -->
+            <div class="col-md-4">
+                <label class="filter-label">
+                    <i data-lucide="briefcase" size="14"></i> Pekerjaan
+                </label>
+
+                <select id="jobTodayInput" class="form-control form-control-custom" onchange="applyFilters()">
+                    <option value="">Semua Pekerjaan</option>
+
+                    @foreach ($all_jobs as $job)
+                        <option value="{{ $job }}" {{ $job_today == $job ? 'selected' : '' }}>
+                            {{ $job }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+        </div>
         <div class="row g-3 mt-2">
             <div class="col-md-6">
                 <div id="dateFilterRange_Start" class="mb-3">
@@ -498,7 +532,6 @@
                 </p>
             </div>
         </div>
-
         <div class="mt-4 pt-3 border-top d-flex justify-content-end gap-2">
             <button type="button" onclick="resetFilters()"
                 class="btn btn-outline-secondary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 transition-all">
@@ -535,6 +568,7 @@
                                 <th class="ps-3 py-2 border-0" style="width:56px;">Foto</th>
                                 <th class="py-2 border-0">Detail Produksi</th>
                                 <th class="text-end pe-3 border-0">Hasil</th>
+                                <th class="text-center pe-3 border-0" style="width:80px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="border-top-0">
@@ -548,9 +582,8 @@
                                         'shift' => $reception->shift,
                                         'job' => $reception->job_today,
                                         'production' => number_format($reception->production_count),
-                                        'ritase' => $reception->ritase_result,
                                         'notes' => $reception->notes ?? '',
-                                        'photo' => $reception->photo ?? '',
+                                        'photo' => $reception->photo ? asset($reception->photo) : '',
                                     ]) }})">
                                     {{-- Kolom Foto --}}
                                     <td class="ps-3 py-2">
@@ -595,19 +628,31 @@
                                     </td>
                                     {{-- Kolom Hasil --}}
                                     <td class="text-end pe-3 py-2">
-                                        <div class="d-flex flex-column align-items-end gap-1">
-                                            <span class="badge fs-6 fw-bold"
-                                                style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">
-                                                {{ number_format($reception->production_count) }}
-                                            </span>
-                                            @if ($reception->ritase_result > 0)
-                                                <span class="badge"
-                                                    style="font-size: 0.7rem; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;">
-                                                    {{ $reception->ritase_result }} Rit
-                                                </span>
-                                            @endif
+                                        <span class="badge fs-6 fw-bold"
+                                            style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">
+                                            {{ number_format($reception->production_count) }}
+                                        </span>
+                                    </td>
+                                    {{-- Kolom AKSI --}}
+                                    <td class="text-center pe-3 py-2" onclick="event.stopPropagation();">
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <a href="{{ route('input.edit', [
+                                                'plant' => $reception->emp_plant,
+                                                'id' => $reception->id,
+                                                'redirect_to' => url()->current(),
+                                            ]) }}"
+                                                class="btn btn-sm btn-primary">
+                                                <i data-lucide="edit"></i>
+                                            </a>
+                                            <button type="button"
+                                                class="btn btn-sm btn-secondary text-white py-1 px-2 border-0 rounded-3 shadow-sm"
+                                                onclick="openDeleteReportModal('{{ route('input.delete', ['plant' => $reception->emp_plant, 'id' => $reception->id]) }}', '{{ addslashes($reception->emp_name ?? 'Unknown') }}')"
+                                                title="Hapus">
+                                                <i data-lucide="trash-2" size="12"></i>
+                                            </button>
                                         </div>
                                     </td>
+                                </tr>
                                 </tr>
                             @empty
                                 <tr>
@@ -651,7 +696,7 @@
                                         <thead>
                                             <tr class="text-muted" style="font-size: 0.65rem;">
                                                 <th>GRUP</th>
-                                                <th class="text-end">PROD / RIT</th>
+                                                <th class="text-end">PRODUKSI</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -662,10 +707,6 @@
                                                         <span class="badge bg-success fw-bold" style="font-size: 0.75rem;"
                                                             title="Produksi">
                                                             {{ number_format($group['production']) }}
-                                                        </span>
-                                                        <span class="badge bg-info text-dark fw-bold"
-                                                            style="font-size: 0.75rem;" title="Ritase">
-                                                            {{ number_format($group['ritase']) }}
                                                         </span>
                                                     </td>
                                                 </tr>
@@ -692,7 +733,7 @@
                         </div>
                         <h6 class="mb-0 fw-bold">Peringkat Operator Per Plant</h6>
                     </div>
-                    <div class="badge bg-sky-50 text-sky-600 fw-medium">Produksi (Hijau) & Ritase (Biru)</div>
+                    <div class="badge bg-sky-50 text-sky-600 fw-medium">Berdasarkan Produksi</div>
                 </div>
 
                 <div class="p-3">
@@ -702,7 +743,7 @@
                                 <div class="p-3 rounded-lg border bg-light shadow-sm h-100">
                                     <h6 class="fw-bold mb-3 d-flex justify-content-between">
                                         <span>Plant {{ $plantName }}</span>
-                                        <span class="badge bg-white text-dark border">{{ $operators->count() }}
+                                        <span class="badge bg-white text-dark border">{{ count($operators) }}
                                             Orang</span>
                                     </h6>
                                     <div class="list-group list-group-flush rounded shadow-sm overflow-hidden border">
@@ -712,8 +753,7 @@
                                             <span class="text-muted fw-bold"
                                                 style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;">Operator</span>
                                             <span class="text-muted fw-bold"
-                                                style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;">Prod
-                                                / Rit</span>
+                                                style="font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.05em;">Produksi</span>
                                         </div>
                                         @forelse($operators as $op)
                                             <div
@@ -726,9 +766,6 @@
                                                 <div class="d-flex gap-1">
                                                     <span class="badge bg-success small" style="font-size: 0.65rem;"
                                                         title="Produksi">{{ number_format($op['production']) }}</span>
-                                                    <span class="badge bg-info text-dark small"
-                                                        style="font-size: 0.65rem;"
-                                                        title="Ritase">{{ number_format($op['ritase']) }}</span>
                                                 </div>
                                             </div>
                                         @empty
@@ -778,8 +815,8 @@
                                 <img id="modal-photo" src="" alt="Foto Produksi"
                                     style="max-width:100%; max-height:280px; border-radius:12px; object-fit:cover; cursor:zoom-in; box-shadow:0 4px 16px rgba(0,0,0,0.12);"
                                     onclick="openLightbox(this.src)">
-                                <div id="modal-no-photo"
-                                    class="d-flex flex-column align-items-center justify-content-center py-5 text-muted">
+                                <div id="modal-no-photo" style="display:none"
+                                    class="flex-column align-items-center justify-content-center py-5 text-muted">
                                     <i data-lucide="image-off" style="width:48px;height:48px;color:#cbd5e1;"></i>
                                     <p class="mt-2 small mb-0">Tidak ada foto</p>
                                 </div>
@@ -836,15 +873,7 @@
                                             id="modal-production"></div>
                                     </div>
                                 </div>
-                                <div class="col-6">
-                                    <div class="p-2 rounded-3" style="background:#e0f2fe; border:1px solid #bae6fd;">
-                                        <div class="text-muted"
-                                            style="font-size:0.65rem;text-transform:uppercase;font-weight:700;">Ritase
-                                        </div>
-                                        <div class="fw-bold" style="font-size:1.1rem;color:#0369a1;" id="modal-ritase">
-                                        </div>
-                                    </div>
-                                </div>
+
                             </div>
                             <div id="modal-notes-wrapper" class="mt-3 p-2 rounded-3"
                                 style="background:#fffbeb;border:1px solid #fde68a;">
@@ -858,11 +887,58 @@
             </div>
         </div>
     </div>
-
+    {{-- Modal Konfirmasi Hapus --}}
+    <div class="modal fade" id="deleteReportModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius:1.25rem; overflow:hidden;">
+                <div class="modal-header border-0"
+                    style="background: linear-gradient(135deg,#ef4444,#b91c1c); color:white;">
+                    <h5 class="modal-title fw-bold">
+                        <i data-lucide="alert-triangle" style="width:18px;height:18px;vertical-align:middle;"
+                            class="me-2"></i>
+                        Konfirmasi Hapus Data
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-center">
+                    <div class="mb-3">
+                        <div
+                            style="width:60px;height:60px;background:#fef2f2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                            <i data-lucide="trash-2" style="width:30px;height:30px;color:#ef4444;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Hapus Data Produksi?</h5>
+                    <p class="text-muted mb-0">Apakah Anda yakin ingin menghapus data milik <strong
+                            id="delete-report-emp-name" class="text-dark"></strong>?</p>
+                    <p class="small text-danger mt-2 mb-0">Tindakan ini tidak dapat dibatalkan!</p>
+                </div>
+                <div class="modal-footer border-0 d-flex justify-content-center bg-light p-3 gap-2">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill px-4 fw-bold"
+                        data-bs-dismiss="modal">Batal</button>
+                    <form id="deleteReportForm" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                            class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2">
+                            <i data-lucide="trash-2" size="16"></i> Ya, Hapus Data
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
     <script>
+        function openDeleteReportModal(url, empName) {
+            document.getElementById('deleteReportForm').action = url;
+            document.getElementById('delete-report-emp-name').textContent = empName;
+            new bootstrap.Modal(document.getElementById('deleteReportModal')).show();
+            lucide.createIcons();
+        }
+
         function updateFilters() {
             const type = document.getElementById('filterType').value;
             const startLabel = document.getElementById('startLabel');
@@ -907,6 +983,7 @@
             const plant = document.getElementById('plantFilter').value;
             const group = document.getElementById('groupFilter').value;
             const operatorName = document.getElementById('operatorNameInput').value;
+            const jobToday = document.getElementById('jobTodayInput')?.value;
 
             // Build absolute URL for consistency
             const baseUrl = window.location.origin + window.location.pathname;
@@ -917,6 +994,9 @@
             if (shift) url.searchParams.set('shift', shift);
             if (plant) url.searchParams.set('plant', plant);
             if (group) url.searchParams.set('group', group);
+            if (jobToday && jobToday.trim() !== '') {
+                url.searchParams.set('job_today', jobToday.trim());
+            }
             if (operatorName.trim()) url.searchParams.set('operator_name', operatorName.trim());
 
             // Handle Date/Month/Year logic based on type
@@ -947,7 +1027,6 @@
             document.getElementById('modal-shift').textContent = 'Shift ' + data.shift;
             document.getElementById('modal-job').textContent = data.job || '-';
             document.getElementById('modal-production').textContent = data.production;
-            document.getElementById('modal-ritase').textContent = data.ritase > 0 ? data.ritase + ' Rit' : '-';
 
             const notesWrapper = document.getElementById('modal-notes-wrapper');
             if (data.notes) {
@@ -959,15 +1038,20 @@
 
             const img = document.getElementById('modal-photo');
             const noPhoto = document.getElementById('modal-no-photo');
-            if (data.photo) {
-                img.src = '/' + data.photo;
-                img.style.display = 'block';
-                noPhoto.style.display = 'none';
-            } else {
-                img.style.display = 'none';
-                noPhoto.style.display = 'flex';
-            }
 
+            // RESET dulu (ini penting banget)
+            img.src = '';
+            img.style.display = 'none';
+            noPhoto.style.display = 'flex';
+
+            if (data.photo && data.photo !== '') {
+                img.src = data.photo;
+
+                img.onload = function() {
+                    img.style.display = 'block';
+                    noPhoto.style.display = 'none';
+                };
+            }
             // Re-render lucide icons inside modal
             if (typeof lucide !== 'undefined') lucide.createIcons();
 
@@ -992,5 +1076,196 @@
         document.addEventListener('DOMContentLoaded', function() {
             updateFilters();
         });
+    </script>
+@endpush
+
+@push('scripts')
+    <script src="{{ asset('js/xlsx.full.min.js') }}"></script>
+    <script>
+        const groupRanking = {!! json_encode($groupRanking ?? []) !!};
+        const operatorRanking = {!! json_encode($operatorRanking ?? []) !!};
+
+        const groupSheet = [
+            ['Plant', 'Grup', 'Total Produksi']
+        ];
+
+        Object.entries(groupRanking || {}).forEach(([plant, groups]) => {
+            if (!Array.isArray(groups)) return;
+
+            groups.forEach(g => {
+                groupSheet.push([
+                    plant,
+                    g.name ?? g.group_name ?? '-',
+                    g.production ?? g.total_production ?? 0
+                ]);
+            });
+        });
+
+        const operatorSheet = [
+            ['Plant', 'Rank', 'Nama Operator', 'Total Produksi']
+        ];
+
+        Object.entries(operatorRanking || {}).forEach(([plant, operators]) => {
+            if (!Array.isArray(operators)) return;
+
+            operators.forEach((op, index) => {
+                operatorSheet.push([
+                    plant,
+                    index + 1,
+                    op.name ?? op.emp_name ?? '-',
+                    op.production ?? op.total_production ?? 0
+                ]);
+            });
+        });
+
+        function exportTableToExcel() {
+            const rows = document.querySelectorAll('table tbody tr');
+            const result = [];
+
+            // Header
+            result.push(['Tanggal', 'Nip', 'Nama Karyawan', 'Plant', 'Grup', 'Shift', 'Pekerjaan', 'Jumlah Produksi',
+                'Catatan'
+            ]);
+
+            rows.forEach(function(row) {
+                if (row.querySelector('td[colspan]')) return;
+
+                const d = row.dataset;
+
+                result.push([
+                    d.date || '',
+                    d.employeeId || '',
+                    d.name || '',
+                    d.plant || '',
+                    d.group || '',
+                    d.shift || '',
+                    d.job || '',
+                    d.production || '',
+                    d.notes || ''
+                ]);
+            });
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(result);
+
+            ws['!cols'] = [{
+                    wch: 12
+                },
+                {
+                    wch: 7
+                },
+                {
+                    wch: 25
+                },
+                {
+                    wch: 7
+                },
+                {
+                    wch: 7
+                },
+                {
+                    wch: 7
+                },
+                {
+                    wch: 25
+                },
+                {
+                    wch: 15
+                },
+                {
+                    wch: 30
+                }
+            ];
+
+            XLSX.utils.book_append_sheet(wb, ws, 'Data Produksi');
+
+            const wsGroup = XLSX.utils.aoa_to_sheet(groupSheet);
+            XLSX.utils.book_append_sheet(wb, wsGroup, 'Ranking Grup');
+
+            const wsOperator = XLSX.utils.aoa_to_sheet(operatorSheet);
+            XLSX.utils.book_append_sheet(wb, wsOperator, 'Ranking Operator');
+
+            const dateStr = new Date().toISOString().split('T')[0];
+
+            XLSX.writeFile(wb, 'laporan_produksi_' + dateStr + '.xlsx');
+        }
+
+        function openDetailModalFromRow(row) {
+            const data = {
+                employee_id: row.dataset.employeeId,
+                name: row.dataset.name,
+                date: row.dataset.date,
+                plant: row.dataset.plant,
+                group: row.dataset.group,
+                shift: row.dataset.shift,
+                job: row.dataset.job,
+                production: row.dataset.production,
+                notes: row.dataset.notes
+            };
+
+            openDetailModal(data);
+        }
+
+        function exportTableToCSV() {
+            const rows = document.querySelectorAll('table tbody tr');
+            const data = [];
+
+            // header
+            data.push([
+                'Tanggal',
+                'NIP',
+                'Nama Karyawan',
+                'Plant',
+                'Grup',
+                'Shift',
+                'Pekerjaan',
+                'Produksi',
+                'Catatan'
+            ]);
+
+            rows.forEach(row => {
+                if (row.querySelector('td[colspan]')) return;
+
+                const d = row.dataset;
+
+                data.push([
+                    d.date || '',
+                    d.employeeId || '',
+                    d.name || '',
+                    d.plant || '',
+                    d.group || '',
+                    d.shift || '',
+                    d.job || '',
+                    d.production || '',
+                    d.notes || ''
+                ]);
+            });
+
+            const csv = data.map(row => row.map(escapeCSV).join(',')).join('\n');
+
+            const blob = new Blob([csv], {
+                type: 'text/csv;charset=utf-8;'
+            });
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `laporan_produksi_${new Date().toISOString().split('T')[0]}.csv`;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function escapeCSV(value) {
+            if (value === null || value === undefined) return '';
+            value = value.toString();
+
+            if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+                value = '"' + value.replace(/"/g, '""') + '"';
+            }
+
+            return value;
+        }
     </script>
 @endpush

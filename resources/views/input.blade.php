@@ -414,21 +414,16 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label small fw-bold text-uppercase text-muted">
-                                    Pekerjaan Hari Ini <span class="text-danger"></span>
+                                    Pekerjaan Hari Ini <span class="text-danger">*</span>
                                 </label>
                                 <div class="job-dropdown-wrapper" id="job-dropdown-wrapper">
-                                    <div class="job-dropdown-trigger d-flex align-items-center justify-content-between"
-                                        id="job-dropdown-trigger" onclick="toggleJobDropdown()">
-
-                                        <div class="d-flex align-items-center gap-2">
-                                            <i data-lucide="user-cog"size="16"></i>
-                                            <span id="job-selected-text">Pilih</span>
-                                        </div>
-
-                                        <i data-lucide="chevron-down" size="16" id="job-chevron"></i>
+                                    <div class="job-dropdown-trigger" id="job-dropdown-trigger"
+                                        onclick="toggleJobDropdown()">
+                                        <span id="job-selected-text">Pilih</span>
+                                        <span class="job-arrow"></span>
                                     </div>
                                     <div class="job-dropdown-panel" id="job-dropdown-panel">
-                                        @foreach (['Scan Tire', 'Scan Tube', 'Strapping', 'Tempel Stiker', 'Susun Tire', 'Pressing', 'Driver', 'Leader', 'Pasang Product Tage OE'] as $job)
+                                        @foreach (['Scan', 'Strapping', 'Tempel Stiker', 'Susun Tire', 'Pressing', 'Driver', 'Leader', 'Pasang Product Tage OE'] as $job)
                                             <label class="job-check-label">
                                                 <input type="checkbox" name="job_today[]" value="{{ $job }}"
                                                     class="job-checkbox" onchange="updateJobText(); toggleRitase();">
@@ -528,17 +523,6 @@
                             <p class="text-muted small mb-0">Daftar operator yang sudah diinput hari ini
                                 {{ $plant ? '(Plant ' . $plant . ')' : '(Semua Plant)' }}</p>
                         </div>
-                        <div class="ms-auto me-3" style="width: 280px;">
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-light border-end-0 pe-2">
-                                    <i data-lucide="search" size="16"></i>
-                                </span>
-                                <input type="text" id="searchMonitoring"
-                                    class="form-control border-start-0 shadow-none ps-2" placeholder="Cari"
-                                    onkeyup="filterMonitoringTable()">
-                            </div>
-                        </div>
-
                         <div class="bg-success bg-opacity-10 text-success p-2 rounded-3">
                             <i data-lucide="activity" size="20"></i>
                         </div>
@@ -560,7 +544,7 @@
                             </thead>
                             <tbody>
                                 @forelse($liveData as $index => $data)
-                                    <tr class="monitoring-row">
+                                    <tr>
                                         <td data-label="No" class="col-no">{{ $index + 1 }}</td>
                                         <td data-label="Nama" class="col-nama">
                                             <div class="fw-bold text-dark">{{ $data->operator_name }}</div>
@@ -602,21 +586,29 @@
                                         </td>
                                         <td data-label="Aksi" class="col-aksi">
                                             <div class="d-flex gap-1 justify-content-center">
+
+                                                {{-- Tombol Edit --}}
                                                 <a href="{{ route('input.edit', ['plant' => $plant ?? $data->emp_plant, 'id' => $data->id]) }}"
-                                                    class="btn btn-sm btn-outline-warning rounded-pill px-2">
+                                                    class="btn btn-sm btn-primary text-white py-1 px-2 border-0 shadow-sm rounded-3">
                                                     <i data-lucide="edit-3" size="12"></i>
                                                 </a>
+
+                                                {{-- Tombol Hapus --}}
                                                 <form
                                                     action="{{ route('input.delete', ['plant' => $plant ?? $data->emp_plant, 'id' => $data->id]) }}"
                                                     method="POST" style="display:inline;"
-                                                    onsubmit="return confirm('Hapus data {{ $data->operator_name }}?')">
+                                                    onsubmit="return confirm('Hapus data {{ $data->operator_name ?? $data->emp_name }}?')">
+
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit"
-                                                        class="btn btn-sm btn-outline-danger rounded-pill px-2">
+
+                                                    <button type="button"
+                                                        class="btn btn-sm btn-secondary text-white py-1 px-2 border-0 shadow-sm rounded-3"
+                                                        onclick="openDeleteModal('{{ $data->id }}', '{{ $data->operator_name }}')">
                                                         <i data-lucide="trash-2" size="12"></i>
                                                     </button>
                                                 </form>
+
                                             </div>
                                         </td>
                                     </tr>
@@ -631,7 +623,37 @@
                 </div>
             </div>
         </div>
+        <div class="modal fade" id="deleteModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 rounded-4">
 
+                    <div class="modal-header border-0">
+                        <h5 class="fw-bold text-danger">Konfirmasi Hapus</h5>
+                    </div>
+
+                    <div class="modal-body">
+                        <p class="mb-0">
+                            Yakin mau hapus data <b id="deleteName"></b>?
+                            <br>
+                            <span class="text-danger small">Data tidak bisa dikembalikan!</span>
+                        </p>
+                    </div>
+
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+
+                        <form id="deleteForm" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-danger">
+                                Hapus
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </div>
         {{-- Lightbox --}}
         <div id="lightbox-overlay" onclick="closeLightbox()">
             <button id="lightbox-close" onclick="closeLightbox()">&#x2715;</button>
@@ -753,12 +775,22 @@
                 const shift = document.getElementById('shift-select').value;
                 const dateInput = document.getElementById('date-input');
                 const hint = document.getElementById('date-hint');
+                // Ambil waktu dari server Laravel (WIB) langsung
+                const now = new Date("{{ now()->setTimezone('Asia/Jakarta')->toIso8601String() }}");
+                const hour = now.getHours();
 
-                const today = new Date();
-                const yesterday = new Date(today);
-                yesterday.setDate(today.getDate() - 1);
+                const today = new Date(now);
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
 
-                const fmt = d => d.toISOString().split('T')[0];
+                // Fungsi format ke YYYY-MM-DD menggunakan Local Time.
+                // JANGAN gunakan toISOString() karena akan mengkonversi ke UTC (dikurangi 7 jam dari WIB)
+                const fmt = d => {
+                    const yyyy = d.getFullYear();
+                    const mm = String(d.getMonth() + 1).padStart(2, '0');
+                    const dd = String(d.getDate()).padStart(2, '0');
+                    return `${yyyy}-${mm}-${dd}`;
+                };
 
                 if (shift === '3') {
                     dateInput.value = fmt(yesterday);
@@ -842,15 +874,14 @@
                 if (e.key === 'Escape') closeLightbox();
             });
 
-            function filterMonitoringTable() {
-                const keyword = document.getElementById('searchMonitoring').value.toLowerCase();
-                const rows = document.querySelectorAll('.monitoring-row');
+            function openDeleteModal(id, name) {
+                document.getElementById('deleteName').textContent = name;
 
-                rows.forEach(row => {
-                    const nama = row.querySelector('.col-nama').textContent.toLowerCase();
+                const form = document.getElementById('deleteForm');
+                form.action = `/production/T/delete/${id}`; // sesuaikan plant kalau dinamis
 
-                    row.style.display = nama.includes(keyword) ? '' : 'none';
-                });
+                const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                modal.show();
             }
         </script>
     @endsection
