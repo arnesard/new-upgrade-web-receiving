@@ -423,7 +423,7 @@
                                         <span class="job-arrow"></span>
                                     </div>
                                     <div class="job-dropdown-panel" id="job-dropdown-panel">
-                                        @foreach (['Scan', 'Strapping', 'Tempel Stiker', 'Susun Tire', 'Pressing', 'Driver', 'Leader', 'Pasang Product Tage OE'] as $job)
+                                        @foreach (['Scan Tire ', 'Scan Tube ', 'Strapping', 'Tempel Stiker', 'Susun Tire', 'Pressing', 'Driver', 'Leader', 'Pasang Product Tage OE'] as $job)
                                             <label class="job-check-label">
                                                 <input type="checkbox" name="job_today[]" value="{{ $job }}"
                                                     class="job-checkbox" onchange="updateJobText(); toggleRitase();">
@@ -517,14 +517,20 @@
 
             <div class="col-12 mt-5">
                 <div class="glass-card shadow-sm border-0 p-4">
-                    <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
                         <div>
                             <h5 class="fw-bold text-dark mb-1">Monitoring Input Langsung</h5>
                             <p class="text-muted small mb-0">Daftar operator yang sudah diinput hari ini
                                 {{ $plant ? '(Plant ' . $plant . ')' : '(Semua Plant)' }}</p>
                         </div>
-                        <div class="bg-success bg-opacity-10 text-success p-2 rounded-3">
-                            <i data-lucide="activity" size="20"></i>
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="text" id="monitorSearch" class="form-control form-control-sm"
+                                placeholder="Cari nama operator..." style="width: 220px; border-radius: 10px;"
+                                onkeyup="filterMonitoringTable()">
+
+                            <div class="bg-success bg-opacity-10 text-success p-2 rounded-3">
+                                <i data-lucide="activity" size="20"></i>
+                            </div>
                         </div>
                     </div>
 
@@ -882,6 +888,27 @@
 
                 const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
                 modal.show();
+            }
+
+            function filterMonitoringTable() {
+                const input = document.getElementById("monitorSearch");
+                const filter = input.value.toLowerCase();
+                const table = document.querySelector(".monitoring-table tbody");
+                const rows = table.getElementsByTagName("tr");
+
+                for (let i = 0; i < rows.length; i++) {
+                    const namaCell = rows[i].querySelector(".col-nama");
+
+                    if (namaCell) {
+                        const text = namaCell.textContent || namaCell.innerText;
+
+                        if (text.toLowerCase().indexOf(filter) > -1) {
+                            rows[i].style.display = "";
+                        } else {
+                            rows[i].style.display = "none";
+                        }
+                    }
+                }
             }
         </script>
     @endsection
