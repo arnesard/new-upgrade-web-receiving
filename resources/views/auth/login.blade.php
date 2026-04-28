@@ -11,16 +11,17 @@
     <link rel="manifest" href="{{ asset('manifest.json') }}">
 
     <style>
-        :root {
-            --primary-color: #3b82f6;
-            --secondary-color: #64748b;
-            --light-bg: #f8fafc;
-        }
-
         body {
-            background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.20), transparent 45%),
-                radial-gradient(circle at 80% 10%, rgba(37, 99, 235, 0.18), transparent 40%),
-                linear-gradient(180deg, #f8fafc, #eef2ff);
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+
+            /* 🌙 DARK MOON LIGHT BACKGROUND */
+            background:
+                radial-gradient(circle at 15% 20%, rgba(99, 102, 241, 0.25), transparent 40%),
+                radial-gradient(circle at 85% 10%, rgba(59, 130, 246, 0.18), transparent 45%),
+                radial-gradient(circle at 50% 90%, rgba(168, 85, 247, 0.12), transparent 50%),
+                #0b1220;
+
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -28,71 +29,89 @@
             padding: 20px;
         }
 
+        /* CARD TETAP PUTIH */
         .login-card {
-            border-radius: 20px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.12);
-            overflow: hidden;
-            max-width: 440px;
             width: 100%;
-            background: white;
+            max-width: 420px;
+            background: #ffffff;
+            border-radius: 18px;
+
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow:
+                0 25px 60px rgba(0, 0, 0, 0.35),
+                0 0 0 1px rgba(255, 255, 255, 0.05);
+
+            backdrop-filter: blur(12px);
         }
 
         .brand-badge {
             width: 80px;
             height: 80px;
-            border-radius: 20px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: white;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
-            padding: 10px;
+            background: #fff;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #111827;
         }
 
         .form-control-custom {
             border-radius: 12px;
+            padding: 0.75rem 1rem;
             border: 1px solid #e5e7eb;
-            padding: 0.875rem 1rem;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background: var(--light-bg);
+            background: #f9fafb;
+            transition: 0.2s;
         }
 
         .form-control-custom:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-            background: white;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+            background: #fff;
         }
 
+        .input-group-text {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+        }
+
+        /* BUTTON FUTURISTIC */
         .btn-login {
-            background: linear-gradient(135deg, var(--primary-color), #2563eb);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 0.875rem 2rem;
-            font-weight: 600;
-            font-size: 1rem;
-            transition: all 0.3s ease;
             width: 100%;
+            padding: 0.85rem;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            color: white;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25);
+            transition: 0.2s;
         }
 
         .btn-login:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.35);
+        }
+
+        .btn-toggle {
+            border: 1px solid #e5e7eb;
+            background: #f3f4f6;
+            border-left: 0;
+            border-radius: 0 12px 12px 0;
         }
 
         .alert-custom {
+            background: #fef2f2;
+            color: #991b1b;
             border-radius: 12px;
-            border: none;
-            padding: 1rem;
-        }
-
-        .input-group .btn-toggle {
-            border-radius: 0 12px 12px 0;
-            border: 1px solid #e5e7eb;
-            border-left: 0;
-            background: var(--light-bg);
+            padding: 12px;
+            border: 1px solid #fecaca;
+            font-size: 14px;
         }
     </style>
 </head>
@@ -105,11 +124,14 @@
                     <img src="{{ asset('images/logo-gt.png') }}" alt="GT Logo" class="img-fluid"
                         style="max-height: 60px;">
                 </div>
-                <div class="text-muted mb-3" style="font-size: 0.65rem; font-weight: 400; letter-spacing: 0.05em;">PT
-                    GAJAH
-                    TUNGGAL TBK</div>
-                <h3 class="fw-bold mb-1">Penerimaan Produksi Gudang Ban B</h3>
-                <p class="text-muted mb-0">Silakan login untuk melanjutkan</p>
+                <div class="text-muted mb-3"
+                    style="font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">
+                    PT GAJAH TUNGGAL TBK
+                </div>
+
+                <p class="mb-0" style="font-weight: 600; color: #374151;">
+                    Silakan login untuk melanjutkan
+                </p>
             </div>
 
             @if ($errors->any())

@@ -7,6 +7,9 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\MonitoringTransferRak\TransferRakController;
+use App\Http\Controllers\pilihmenu\PilihMenuController;
+use App\Http\Controllers\PenerimaanController;
 
 // Authentication routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -15,7 +18,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Protected routes (all authenticated users: admin + leader)
 Route::middleware(['auth'])->group(function () {
-    Route::get('/', [ProductionController::class, 'dashboard'])->name('dashboard');
+    Route::get('/', function () {
+        return redirect('/dashboard');
+    });
     Route::get('/api/trend-data', [ProductionController::class, 'trendData'])->name('api.trend-data');
     Route::get('/api/trend-7days', [ProductionController::class, 'trendData7Days'])->name('api.trend-7days');
     Route::get('/api/plant-group', [ProductionController::class, 'plantGroupData'])->name('api.plant-group');
@@ -61,4 +66,26 @@ Route::middleware(['auth'])->group(function () {
         Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     });
+
+    //MONITORING TRANSFER RAK
+    Route::get('/dashboard', [PilihMenuController::class, 'index'])
+        ->name('dashboard')
+        ->middleware('auth');
+    Route::post('/transfer-rak/start', [TransferRakController::class, 'start'])
+        ->name('transfer.start');
+    Route::post('/transfer-rak/scan', [TransferRakController::class, 'scan']);
+    Route::post('/transfer-rak/finish', [TransferRakController::class, 'finish']);
+    Route::get('/transfer-rak/monitoring', function () {
+        return view('MonitoringTransferRak.monitoring');
+    })->name('transfer.monitoring')->middleware('auth');
+
+    //PILIH MENU SETELAH LOGIN
+    Route::get('/transfer-rak', [TransferRakController::class, 'index'])
+        ->name('transfer.index')
+        ->middleware('auth');
+    Route::get('/penerimaan-produksi', [ProductionController::class, 'inputForm'])
+        ->name('penerimaan.index');
+    Route::get('/menu', [PilihMenuController::class, 'index'])->name('pilihmenu.index');
+    Route::post('/pilih-menu/set-session', [PilihMenuController::class, 'pilih'])
+        ->name('pilihmenu.set');
 });

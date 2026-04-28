@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ApiAuthController;
 use App\Http\Controllers\Api\ApiProductionController;
 use App\Http\Controllers\Api\ApiOvertimeController;
+use App\Http\Controllers\Api\KaryawanController;
+use App\Http\Controllers\Api\SupirController;
+use App\Http\Controllers\Api\MobilController;
 
 // Public routes (no token needed)
 Route::post('/login', [ApiAuthController::class, 'login']);
@@ -27,3 +30,13 @@ Route::middleware('api.token')->group(function () {
     Route::delete('/overtimes/{overtime}', [ApiOvertimeController::class, 'destroy']);
     Route::get('/employee-names', [ApiOvertimeController::class, 'employeeNames']);
 });
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+});
+
+Route::get('/karyawan', [KaryawanController::class, 'index']);
+Route::get('/supir', [SupirController::class, 'index']);
+Route::get('/mobil', [MobilController::class, 'index']);
+Route::get('/mobil/by-barcode/{barcode}', [MobilController::class, 'getByBarcode']);
