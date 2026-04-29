@@ -10,7 +10,19 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\MonitoringTransferRak\TransferRakController;
 use App\Http\Controllers\pilihmenu\PilihMenuController;
 use App\Http\Controllers\PenerimaanController;
+<<<<<<< HEAD
 
+=======
+use App\Http\Controllers\MonitoringTransferRak\KaryawanTransfer;
+
+
+Route::prefix('transfer-rak/karyawan')->group(function () {
+    Route::get('/', [KaryawanTransfer::class, 'index'])->name('karyawan.index');
+    Route::post('/store', [KaryawanTransfer::class, 'store'])->name('karyawan.store');
+    Route::post('/update/{id}', [KaryawanTransfer::class, 'update'])->name('karyawan.update');
+    Route::delete('/delete/{id}', [KaryawanTransfer::class, 'destroy'])->name('karyawan.delete');
+});
+>>>>>>> b99a10f (29-04-2026)
 // Authentication routes
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -68,6 +80,7 @@ Route::middleware(['auth'])->group(function () {
     });
 
     //MONITORING TRANSFER RAK
+<<<<<<< HEAD
     Route::get('/dashboard', [PilihMenuController::class, 'index'])
         ->name('dashboard')
         ->middleware('auth');
@@ -83,6 +96,34 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transfer-rak', [TransferRakController::class, 'index'])
         ->name('transfer.index')
         ->middleware('auth');
+=======
+    Route::get('/transfer-rak', [TransferRakController::class, 'index'])
+        ->name('transfer.index');
+    Route::get('/transfer-rak/drivers', [TransferRakController::class, 'getDrivers'])
+        ->name('transfer.drivers');
+    Route::post('/transfer-rak/start', [TransferRakController::class, 'start'])
+        ->name('transfer.start');
+    Route::post('/transfer-rak/scan', [TransferRakController::class, 'scan'])
+        ->name('transfer.scan');
+    Route::post('/transfer-rak/finish', [TransferRakController::class, 'finish'])
+        ->name('transfer.finish');
+    Route::post('/transfer-rak/cancel', [TransferRakController::class, 'cancel'])
+        ->name('transfer.cancel');
+    Route::get('/transfer-rak/dashboard', [TransferRakController::class, 'dashboard'])
+        ->name('transfer.dashboard');
+    Route::get('/transfer-rak/dashboard/data', [TransferRakController::class, 'dashboardData'])
+        ->name('transfer.dashboard.data');
+    Route::prefix('transfer-rak/karyawan')->group(function () {
+        Route::get('/', [KaryawanTransfer::class, 'index'])->name('karyawan.index');
+        Route::post('/store', [KaryawanTransfer::class, 'store'])->name('karyawan.store');
+        Route::post('/update/{id}', [KaryawanTransfer::class, 'update'])->name('karyawan.update');
+        Route::delete('/delete/{id}', [KaryawanTransfer::class, 'destroy'])->name('karyawan.delete');
+    });
+
+    //PILIH MENU SETELAH LOGIN
+    Route::get('/dashboard', [PilihMenuController::class, 'index'])
+        ->name('dashboard');
+>>>>>>> b99a10f (29-04-2026)
     Route::get('/penerimaan-produksi', [ProductionController::class, 'inputForm'])
         ->name('penerimaan.index');
     Route::get('/menu', [PilihMenuController::class, 'index'])->name('pilihmenu.index');
