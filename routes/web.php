@@ -80,6 +80,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('transfer.finish');
     Route::post('/transfer-rak/cancel', [TransferRakController::class, 'cancel'])
         ->name('transfer.cancel');
+    Route::get('/transfer-rak/dashboard', [TransferRakController::class, 'dashboard'])
+        ->name('transfer.dashboard');
+    Route::get('/transfer-rak/dashboard/data', [TransferRakController::class, 'dashboardData'])
+        ->name('transfer.dashboard.data');
 
     //PILIH MENU SETELAH LOGIN
     Route::get('/dashboard', [PilihMenuController::class, 'index'])

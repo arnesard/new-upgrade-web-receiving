@@ -5,6 +5,7 @@ namespace App\Http\Controllers\MonitoringTransferRak;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Employee;
 use App\Models\MonitoringTransferRak\TransferRak;
 use App\Models\MonitoringTransferRak\TransferRakDetail;
@@ -205,5 +206,115 @@ class TransferRakController extends Controller
                 'error'   => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Halaman dashboard
+     */
+    public function dashboard()
+    {
+        return view('MonitoringTransferRak.dashboard');
+    }
+
+    /**
+     * API data untuk dashboard (KPI, trend, top operator, activity)
+     */
+    public function dashboardData(Request $request)
+    {
+        $range = $request->get('range', 'today');
+
+        [$startDate, $endDate] = match ($range) {
+            'week'  => [now()->startOfWeek(), now()->endOfDay()],
+            'month' => [now()->startOfMonth(), now()->endOfDay()],
+            default => [now()->startOfDay(), now()->endOfDay()],
+        };
+
+        // ── KPI ──
+        $selesai = TransferRak::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'selesai');
+
+        $totalRak        = (clone $selesai)->sum('total_rak');
+        $transferSelesai = (clone $selesai)->count();
+        $transferBatal   = TransferRak::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'batal')->count();
+        $totalDone       = $transferSelesai + $transferBatal;
+        $completionRate  = $totalDone > 0 ? round(($transferSelesai / $totalDone) * 100) : 0;
+        $sedangProses    = TransferRak::where('status', 'proses')->count();
+
+        // Rata-rata durasi (menit)
+        $avgDurasi = TransferRak::whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'selesai')
+            ->whereNotNull('waktu_selesai')
+            ->get()
+            ->avg(fn($t) => $t->waktu_mulai && $t->waktu_selesai
+                ? $t->waktu_mulai->diffInMinutes($t->waktu_selesai)
+                : null);
+
+        // ── TREND 7 HARI TERAKHIR ──
+        $trendRaw = TransferRak::selectRaw('DATE(created_at) as tgl, SUM(total_rak) as total')
+            ->where('status', 'selesai')
+            ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+            ->groupBy('tgl')
+            ->orderBy('tgl')
+            ->pluck('total', 'tgl');
+
+        $trend = collect(range(6, 0))->map(function ($i) use ($trendRaw) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            return [
+                'date'  => now()->subDays($i)->format('d/m'),
+                'total' => (int) ($trendRaw[$date] ?? 0),
+            ];
+        });
+
+        // ── TOP 5 OPERATOR ──
+        $topOperators = TransferRak::select('id_karyawan',
+                DB::raw('SUM(total_rak) as total_rak'),
+                DB::raw('COUNT(*) as jumlah'))
+            ->with('karyawan:id,name')
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->where('status', 'selesai')
+            ->groupBy('id_karyawan')
+            ->orderByDesc('total_rak')
+            ->limit(5)
+            ->get()
+            ->map(fn($t) => [
+                'nama'  => $t->karyawan?->name ?? 'Unknown',
+                'total' => (int) $t->total_rak,
+                'count' => (int) $t->jumlah,
+            ]);
+
+        // ── ACTIVITY FEED (10 terbaru) ──
+        $activity = TransferRak::with([
+                'karyawan:id,name',
+                'supir:id,nama_karyawan',
+                'mobil:id,nama_kendaraan',
+            ])
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get()
+            ->map(fn($t) => [
+                'operator'  => $t->karyawan?->name ?? '-',
+                'supir'     => $t->supir?->nama_karyawan ?? '-',
+                'mobil'     => $t->mobil?->nama_kendaraan ?? '-',
+                'total_rak' => $t->total_rak,
+                'status'    => $t->status,
+                'durasi'    => ($t->waktu_mulai && $t->waktu_selesai)
+                    ? $t->waktu_mulai->diffInMinutes($t->waktu_selesai) . ' mnt'
+                    : '-',
+                'waktu'     => $t->created_at->format('d/m H:i'),
+            ]);
+
+        return response()->json([
+            'kpi' => [
+                'total_rak'        => (int) $totalRak,
+                'transfer_selesai' => $transferSelesai,
+                'completion_rate'  => $completionRate,
+                'avg_durasi'       => $avgDurasi ? round($avgDurasi) . ' mnt' : '-',
+                'sedang_proses'    => $sedangProses,
+            ],
+            'trend'         => $trend,
+            'top_operators' => $topOperators,
+            'activity'      => $activity,
+        ]);
     }
 }

@@ -349,7 +349,7 @@
         <div class="nav-container">
 
             {{-- DASHBOARD --}}
-            <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('transfer.dashboard') }}" class="nav-item {{ request()->routeIs('transfer.dashboard') ? 'active' : '' }}">
                 <span class="svg-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <rect x="3" y="12" width="4" height="9" rx="1" />
