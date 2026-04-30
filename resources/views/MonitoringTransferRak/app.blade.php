@@ -8,12 +8,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Forklift Monitor')</title>
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-<<<<<<< HEAD
-=======
-    <link href="{{ asset('bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
-
-    @stack('styles')
->>>>>>> b99a10f (29-04-2026)
     <style>
         * {
             margin: 0;
@@ -355,12 +349,8 @@
         <div class="nav-container">
 
             {{-- DASHBOARD --}}
-<<<<<<< HEAD
-            <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-=======
             <a href="{{ route('transfer.dashboard') }}"
                 class="nav-item {{ request()->routeIs('transfer.dashboard') ? 'active' : '' }}">
->>>>>>> b99a10f (29-04-2026)
                 <span class="svg-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <rect x="3" y="12" width="4" height="9" rx="1" />
@@ -372,13 +362,8 @@
             </a>
 
             {{-- INPUT --}}
-<<<<<<< HEAD
-            <a href="{{ route('transfer.monitoring') }}"
-                class="nav-item {{ request()->routeIs('transfer.monitoring') ? 'active' : '' }}">
-=======
             <a href="{{ route('transfer.index') }}"
                 class="nav-item {{ request()->routeIs('transfer.index') ? 'active' : '' }}">
->>>>>>> b99a10f (29-04-2026)
                 <span class="svg-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="12" cy="12" r="9" />
@@ -389,35 +374,15 @@
                 <span>Input</span>
             </a>
 
-<<<<<<< HEAD
-            {{-- HISTORY --}}
-            <a href="#" class="nav-item">
-                <span class="svg-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                </span>
-                <span>History</span>
-            </a>
-
-            {{-- PROFILE --}}
-            <a href="#" class="nav-item">
-=======
             {{-- PROFILE --}}
             <a href="{{ route('karyawan.index') }}" class="nav-item">
->>>>>>> b99a10f (29-04-2026)
                 <span class="svg-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
                 </span>
-<<<<<<< HEAD
-                <span>Profile</span>
-=======
-                <span>Karyawan</span>
->>>>>>> b99a10f (29-04-2026)
+                <span>karyawan</span>
             </a>
 
             {{-- REPORT --}}
@@ -433,12 +398,8 @@
             </a>
 
             {{-- BACK TO MENU --}}
-<<<<<<< HEAD
-            <a href="{{ route('pilihmenu.index') }}" class="nav-item {{ request()->routeIs('menu') ? 'active' : '' }}">
-=======
             <a href="{{ route('pilihmenu.index') }}"
                 class="nav-item {{ request()->routeIs('menu') ? 'active' : '' }}">
->>>>>>> b99a10f (29-04-2026)
                 <span class="svg-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M19 12H5" />
@@ -551,10 +512,6 @@
 
     <script src="{{ asset('js/app.js') }}"></script>
     @yield('scripts')
-<<<<<<< HEAD
-=======
-    <script src="{{ asset('js/bootstrap.bundle.min.js') }}"></script>
->>>>>>> b99a10f (29-04-2026)
 </body>
 
 </html>

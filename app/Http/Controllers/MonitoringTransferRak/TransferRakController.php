@@ -5,21 +5,6 @@ namespace App\Http\Controllers\MonitoringTransferRak;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-<<<<<<< HEAD
-use App\Models\TransferRak;
-use App\Models\TransferRakDetail;
-use App\Models\Karyawan;
-use App\Models\Supir;
-use App\Models\Mobil;
-
-class TransferRakController extends Controller
-{
-    public function monitoring()
-    {
-        return view('MonitoringTransferRak.monitoring');
-    }
-
-=======
 use Illuminate\Support\Facades\DB;
 use App\Models\Employee;
 use App\Models\MonitoringTransferRak\TransferRak;
@@ -29,18 +14,12 @@ use App\Models\MonitoringTransferRak\Vehicle;
 
 class TransferRakController extends Controller
 {
-    /**
-     * Halaman utama input transfer rak
-     */
     public function index()
     {
         $karyawan = Employee::orderBy('name')->get();
         return view('MonitoringTransferRak.monitoring', compact('karyawan'));
     }
 
-    /**
-     * API: Cari/list supir (untuk autocomplete)
-     */
     public function getDrivers(Request $request)
     {
         $search = $request->get('q', '');
@@ -54,50 +33,23 @@ class TransferRakController extends Controller
         return response()->json($drivers);
     }
 
-    /**
-     * Mulai transfer baru: simpan header, return transfer_rak_id
-     */
->>>>>>> b99a10f (29-04-2026)
     public function start(Request $request)
     {
         try {
             $validated = $request->validate([
-<<<<<<< HEAD
-                'id_karyawan' => 'required|integer',
-                'id_supir' => 'required|integer',
-                'id_mobil' => 'required|integer'
-            ]);
-
-            $transfer = TransferRak::create([
-                'user_id' => Auth::id(),
-                'id_karyawan' => $validated['id_karyawan'],
-                'id_supir' => $validated['id_supir'],
-                'id_mobil' => $validated['id_mobil'],
-                'waktu_mulai' => now(),
-                'status' => 'proses'
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'transfer_id' => $transfer->id,
-                'message' => 'Transfer dimulai'
-=======
-                'id_karyawan'  => 'required|integer|exists:employees,id',
-                'nama_supir'   => 'required|string|max:255',
+                'id_karyawan'    => 'required|integer|exists:employees,id',
+                'nama_supir'     => 'required|string|max:255',
                 'nama_kendaraan' => 'required|string|max:255',
             ]);
 
-            // Find-or-create supir by nama
-            $driver = Driver::firstOrCreate(
-                ['nama_karyawan' => trim($validated['nama_supir'])]
-            );
+            $driver = Driver::firstOrCreate([
+                'nama_karyawan' => trim($validated['nama_supir'])
+            ]);
 
-            // Find-or-create kendaraan by nama
-            $vehicle = Vehicle::firstOrCreate(
-                ['nama_kendaraan' => trim($validated['nama_kendaraan'])]
-            );
+            $vehicle = Vehicle::firstOrCreate([
+                'nama_kendaraan' => trim($validated['nama_kendaraan'])
+            ]);
 
-            // Buat record transfer baru
             $transfer = TransferRak::create([
                 'user_id'     => Auth::id(),
                 'id_karyawan' => $validated['id_karyawan'],
@@ -108,55 +60,28 @@ class TransferRakController extends Controller
             ]);
 
             return response()->json([
-                'success'      => true,
-                'transfer_id'  => $transfer->id,
-                'supir_id'     => $driver->id,
-                'vehicle_id'   => $vehicle->id,
-                'message'      => 'Transfer dimulai',
->>>>>>> b99a10f (29-04-2026)
+                'success'     => true,
+                'transfer_id' => $transfer->id,
+                'message'     => 'Transfer dimulai',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-<<<<<<< HEAD
-                'error' => $e->getMessage()
-=======
                 'error'   => $e->getMessage(),
->>>>>>> b99a10f (29-04-2026)
             ], 500);
         }
     }
 
-<<<<<<< HEAD
-=======
-    /**
-     * Scan satu rak
-     */
->>>>>>> b99a10f (29-04-2026)
     public function scan(Request $request)
     {
         try {
             $validated = $request->validate([
-<<<<<<< HEAD
-                'transfer_rak_id' => 'required|integer',
-                'kode_rak' => 'required|string'
-=======
                 'transfer_rak_id' => 'required|integer|exists:transfer_raks,id',
                 'kode_rak'        => 'required|string|max:100',
->>>>>>> b99a10f (29-04-2026)
             ]);
 
             $transfer = TransferRak::find($validated['transfer_rak_id']);
 
-<<<<<<< HEAD
-            if (!$transfer) {
-                return response()->json([
-                    'success' => false,
-                    'error' => 'Transfer tidak ditemukan'
-                ], 404);
-            }
-
-=======
             if (!$transfer || $transfer->status !== 'proses') {
                 return response()->json([
                     'success' => false,
@@ -164,77 +89,46 @@ class TransferRakController extends Controller
                 ], 404);
             }
 
-            // Cek duplikat
->>>>>>> b99a10f (29-04-2026)
             $exists = TransferRakDetail::where('transfer_rak_id', $validated['transfer_rak_id'])
                 ->where('kode_rak', $validated['kode_rak'])
                 ->exists();
 
             if ($exists) {
                 return response()->json([
-                    'success' => false,
-<<<<<<< HEAD
-                    'error' => '❌ Rak sudah discan sebelumnya!'
-=======
-                    'error'   => '❌ Rak sudah discan sebelumnya!',
+                    'success'   => false,
+                    'error'     => '❌ Rak sudah discan sebelumnya!',
                     'duplicate' => true,
->>>>>>> b99a10f (29-04-2026)
                 ], 400);
             }
 
             $detail = TransferRakDetail::create([
                 'transfer_rak_id' => $validated['transfer_rak_id'],
-<<<<<<< HEAD
-                'kode_rak' => $validated['kode_rak'],
-                'waktu_scan' => now()
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'data' => $detail
-=======
                 'kode_rak'        => $validated['kode_rak'],
                 'waktu_scan'      => now(),
             ]);
 
-            // Update total_rak realtime
             $total = TransferRakDetail::where('transfer_rak_id', $validated['transfer_rak_id'])->count();
             $transfer->update(['total_rak' => $total]);
 
             return response()->json([
-                'success'   => true,
-                'kode_rak'  => $detail->kode_rak,
+                'success'    => true,
+                'kode_rak'   => $detail->kode_rak,
                 'waktu_scan' => $detail->waktu_scan->format('H:i:s'),
-                'total'     => $total,
->>>>>>> b99a10f (29-04-2026)
+                'total'      => $total,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-<<<<<<< HEAD
-                'error' => $e->getMessage()
-=======
                 'error'   => $e->getMessage(),
->>>>>>> b99a10f (29-04-2026)
             ], 500);
         }
     }
 
-<<<<<<< HEAD
-=======
-    /**
-     * Selesaikan transfer
-     */
->>>>>>> b99a10f (29-04-2026)
     public function finish(Request $request)
     {
         try {
             $validated = $request->validate([
-<<<<<<< HEAD
-                'transfer_rak_id' => 'required|integer'
-=======
                 'transfer_rak_id' => 'required|integer|exists:transfer_raks,id',
->>>>>>> b99a10f (29-04-2026)
             ]);
 
             $transfer = TransferRak::find($validated['transfer_rak_id']);
@@ -242,11 +136,7 @@ class TransferRakController extends Controller
             if (!$transfer) {
                 return response()->json([
                     'success' => false,
-<<<<<<< HEAD
-                    'error' => 'Transfer tidak ditemukan'
-=======
                     'error'   => 'Transfer tidak ditemukan',
->>>>>>> b99a10f (29-04-2026)
                 ], 404);
             }
 
@@ -254,52 +144,23 @@ class TransferRakController extends Controller
 
             $transfer->update([
                 'waktu_selesai' => now(),
-<<<<<<< HEAD
-                'total_rak' => $totalScanned,
-                'status' => 'selesai'
-=======
                 'total_rak'     => $totalScanned,
                 'status'        => 'selesai',
->>>>>>> b99a10f (29-04-2026)
             ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transfer selesai',
-<<<<<<< HEAD
-                'total' => $totalScanned
-=======
                 'total'   => $totalScanned,
->>>>>>> b99a10f (29-04-2026)
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-<<<<<<< HEAD
-                'error' => $e->getMessage()
-=======
                 'error'   => $e->getMessage(),
->>>>>>> b99a10f (29-04-2026)
             ], 500);
         }
     }
 
-<<<<<<< HEAD
-    public function index()
-    {
-        $karyawan = Karyawan::first();
-        $supir = Supir::first();
-        $mobil = Mobil::first();
-
-        return view('MonitoringTransferRak.monitoring', compact(
-            'karyawan',
-            'supir',
-            'mobil'
-        ));
-=======
-    /**
-     * Batalkan transfer
-     */
     public function cancel(Request $request)
     {
         try {
@@ -432,6 +293,5 @@ class TransferRakController extends Controller
             'top_operators' => $topOperators,
             'activity'      => $activity,
         ]);
->>>>>>> b99a10f (29-04-2026)
     }
 }

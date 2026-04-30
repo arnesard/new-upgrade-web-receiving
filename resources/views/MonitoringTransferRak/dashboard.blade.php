@@ -1,365 +1,364 @@
 @extends('MonitoringTransferRak.app')
 @section('title', 'Dashboard Transfer Rak')
-@push('styles')
-    <style>
-        /* ── RESET KHUSUS DASHBOARD ── */
-        body {
-            overflow-y: auto !important;
+
+<style>
+    /* ── RESET KHUSUS DASHBOARD ── */
+    body {
+        overflow-y: auto !important;
+    }
+
+    .dash-wrap {
+        padding: 14px 14px 80px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* ── TOP BAR ── */
+    .dash-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .dash-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: #64c8ff;
+        text-shadow: 0 0 10px rgba(100, 200, 255, 0.3);
+    }
+
+    .dash-refresh {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.25);
+        border-radius: 8px;
+        padding: 7px 12px;
+        color: #64c8ff;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .dash-refresh:hover {
+        background: rgba(59, 130, 246, 0.2);
+    }
+
+    .refresh-icon {
+        font-size: 14px;
+        transition: transform 0.5s;
+    }
+
+    .refresh-icon.spin {
+        animation: spinOnce 0.5s ease;
+    }
+
+    @keyframes spinOnce {
+        from {
+            transform: rotate(0deg);
         }
 
-        .dash-wrap {
-            padding: 14px 14px 80px;
-            max-width: 1200px;
-            margin: 0 auto;
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* ── FILTER TABS ── */
+    .filter-tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 16px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 10px;
+        padding: 4px;
+    }
+
+    .filter-tab {
+        flex: 1;
+        padding: 8px;
+        border-radius: 8px;
+        border: none;
+        background: transparent;
+        color: #64748b;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: center;
+    }
+
+    .filter-tab.active {
+        background: rgba(59, 130, 246, 0.2);
+        color: #64c8ff;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    /* ── KPI GRID ── */
+    .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .kpi-card {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        border-radius: 14px;
+        padding: 14px;
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.2s;
+    }
+
+    .kpi-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .kpi-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--card-color, #3b82f6);
+        opacity: 0.7;
+    }
+
+    .kpi-card.wide {
+        grid-column: span 2;
+    }
+
+    .kpi-icon {
+        font-size: 22px;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .kpi-label {
+        font-size: 10px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+
+    .kpi-value {
+        font-size: 32px;
+        font-weight: 900;
+        color: var(--card-color, #64c8ff);
+        line-height: 1;
+        text-shadow: 0 0 20px rgba(100, 200, 255, 0.3);
+    }
+
+    .kpi-sub {
+        font-size: 10px;
+        color: #475569;
+        margin-top: 4px;
+    }
+
+    /* Warna per card */
+    .kpi-blue {
+        --card-color: #64c8ff;
+    }
+
+    .kpi-green {
+        --card-color: #22c55e;
+    }
+
+    .kpi-purple {
+        --card-color: #a78bfa;
+    }
+
+    .kpi-yellow {
+        --card-color: #fbbf24;
+    }
+
+    .kpi-orange {
+        --card-color: #fb923c;
+    }
+
+    /* Shimmer loading */
+    .kpi-value.loading {
+        background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+        background-size: 200%;
+        animation: shimmer 1.2s infinite;
+        border-radius: 6px;
+        color: transparent;
+        width: 60px;
+        height: 36px;
+    }
+
+    @keyframes shimmer {
+        from {
+            background-position: 200% 0;
         }
 
-        /* ── TOP BAR ── */
-        .dash-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 14px;
-            flex-wrap: wrap;
-            gap: 10px;
+        to {
+            background-position: -200% 0;
+        }
+    }
+
+    /* ── CHARTS ROW ── */
+    .charts-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .chart-card {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    .chart-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 12px;
+    }
+
+    /* ── ACTIVITY FEED ── */
+    .activity-card {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        border-radius: 14px;
+        padding: 14px;
+    }
+
+    .activity-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 12px;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-status {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+
+    .status-selesai {
+        background: #22c55e;
+        box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+    }
+
+    .status-proses {
+        background: #fbbf24;
+        box-shadow: 0 0 6px rgba(251, 191, 36, 0.6);
+        animation: blink 1s ease infinite;
+    }
+
+    .status-batal {
+        background: #f87171;
+        box-shadow: 0 0 6px rgba(248, 113, 113, 0.5);
+    }
+
+    @keyframes blink {
+
+        0%,
+        100% {
+            opacity: 1;
         }
 
-        .dash-title {
-            font-size: 16px;
-            font-weight: 800;
-            color: #64c8ff;
-            text-shadow: 0 0 10px rgba(100, 200, 255, 0.3);
+        50% {
+            opacity: 0.3;
         }
+    }
 
-        .dash-refresh {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.25);
-            border-radius: 8px;
-            padding: 7px 12px;
-            color: #64c8ff;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
+    .activity-main {
+        flex: 1;
+        min-width: 0;
+    }
 
-        .dash-refresh:hover {
-            background: rgba(59, 130, 246, 0.2);
-        }
+    .activity-op {
+        font-size: 12px;
+        font-weight: 600;
+        color: #e2e8f0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-        .refresh-icon {
-            font-size: 14px;
-            transition: transform 0.5s;
-        }
+    .activity-sub {
+        font-size: 10px;
+        color: #64748b;
+        margin-top: 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 
-        .refresh-icon.spin {
-            animation: spinOnce 0.5s ease;
-        }
+    .activity-right {
+        text-align: right;
+        flex-shrink: 0;
+    }
 
-        @keyframes spinOnce {
-            from {
-                transform: rotate(0deg);
-            }
+    .activity-rak {
+        font-size: 14px;
+        font-weight: 800;
+        color: #64c8ff;
+    }
 
-            to {
-                transform: rotate(360deg);
-            }
-        }
+    .activity-time {
+        font-size: 10px;
+        color: #475569;
+    }
 
-        /* ── FILTER TABS ── */
-        .filter-tabs {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 16px;
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 10px;
-            padding: 4px;
-        }
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 24px;
+        color: #475569;
+        font-size: 13px;
+    }
 
-        .filter-tab {
-            flex: 1;
-            padding: 8px;
-            border-radius: 8px;
-            border: none;
-            background: transparent;
-            color: #64748b;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-        }
-
-        .filter-tab.active {
-            background: rgba(59, 130, 246, 0.2);
-            color: #64c8ff;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        /* ── KPI GRID ── */
+    /* ── DESKTOP ── */
+    @media (min-width: 768px) {
         .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-
-        .kpi-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(59, 130, 246, 0.15);
-            border-radius: 14px;
-            padding: 14px;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.2s;
-        }
-
-        .kpi-card:hover {
-            transform: translateY(-2px);
-        }
-
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--card-color, #3b82f6);
-            opacity: 0.7;
+            grid-template-columns: repeat(5, 1fr);
         }
 
         .kpi-card.wide {
-            grid-column: span 2;
+            grid-column: span 1;
         }
 
-        .kpi-icon {
-            font-size: 22px;
-            margin-bottom: 6px;
-            display: block;
-        }
-
-        .kpi-label {
-            font-size: 10px;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .kpi-value {
-            font-size: 32px;
-            font-weight: 900;
-            color: var(--card-color, #64c8ff);
-            line-height: 1;
-            text-shadow: 0 0 20px rgba(100, 200, 255, 0.3);
-        }
-
-        .kpi-sub {
-            font-size: 10px;
-            color: #475569;
-            margin-top: 4px;
-        }
-
-        /* Warna per card */
-        .kpi-blue {
-            --card-color: #64c8ff;
-        }
-
-        .kpi-green {
-            --card-color: #22c55e;
-        }
-
-        .kpi-purple {
-            --card-color: #a78bfa;
-        }
-
-        .kpi-yellow {
-            --card-color: #fbbf24;
-        }
-
-        .kpi-orange {
-            --card-color: #fb923c;
-        }
-
-        /* Shimmer loading */
-        .kpi-value.loading {
-            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
-            background-size: 200%;
-            animation: shimmer 1.2s infinite;
-            border-radius: 6px;
-            color: transparent;
-            width: 60px;
-            height: 36px;
-        }
-
-        @keyframes shimmer {
-            from {
-                background-position: 200% 0;
-            }
-
-            to {
-                background-position: -200% 0;
-            }
-        }
-
-        /* ── CHARTS ROW ── */
         .charts-row {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-bottom: 16px;
+            grid-template-columns: 3fr 2fr;
         }
 
-        .chart-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(59, 130, 246, 0.15);
-            border-radius: 14px;
-            padding: 14px;
+        .dash-title {
+            font-size: 18px;
         }
-
-        .chart-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin-bottom: 12px;
-        }
-
-        /* ── ACTIVITY FEED ── */
-        .activity-card {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(59, 130, 246, 0.15);
-            border-radius: 14px;
-            padding: 14px;
-        }
-
-        .activity-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            margin-bottom: 12px;
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-
-        .activity-status {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        .status-selesai {
-            background: #22c55e;
-            box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
-        }
-
-        .status-proses {
-            background: #fbbf24;
-            box-shadow: 0 0 6px rgba(251, 191, 36, 0.6);
-            animation: blink 1s ease infinite;
-        }
-
-        .status-batal {
-            background: #f87171;
-            box-shadow: 0 0 6px rgba(248, 113, 113, 0.5);
-        }
-
-        @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0.3;
-            }
-        }
-
-        .activity-main {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .activity-op {
-            font-size: 12px;
-            font-weight: 600;
-            color: #e2e8f0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .activity-sub {
-            font-size: 10px;
-            color: #64748b;
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .activity-right {
-            text-align: right;
-            flex-shrink: 0;
-        }
-
-        .activity-rak {
-            font-size: 14px;
-            font-weight: 800;
-            color: #64c8ff;
-        }
-
-        .activity-time {
-            font-size: 10px;
-            color: #475569;
-        }
-
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 24px;
-            color: #475569;
-            font-size: 13px;
-        }
-
-        /* ── DESKTOP ── */
-        @media (min-width: 768px) {
-            .kpi-grid {
-                grid-template-columns: repeat(5, 1fr);
-            }
-
-            .kpi-card.wide {
-                grid-column: span 1;
-            }
-
-            .charts-row {
-                grid-template-columns: 3fr 2fr;
-            }
-
-            .dash-title {
-                font-size: 18px;
-            }
-        }
-    </style>
-@endpush
+    }
+</style>
 
 <div class="dash-wrap">
     {{-- HEADER --}}
