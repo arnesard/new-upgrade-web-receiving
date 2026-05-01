@@ -154,6 +154,14 @@
                     Monitoring Transfer Rak
                 </div>
             </a>
+            <a href="{{ route('overtime.index') }}" class="card-menu">
+                <div class="icon-box">
+                    <i data-lucide="clock"></i>
+                </div>
+                <div class="menu-text">
+                    Input Lembur
+                </div>
+            </a>
             <form action="{{ route('logout') }}" method="POST" style="margin-top: 30px;">
                 @csrf
                 <button type="submit" class="logout-btn">

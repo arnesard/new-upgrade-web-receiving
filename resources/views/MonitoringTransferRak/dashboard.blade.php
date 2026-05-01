@@ -1,6 +1,7 @@
 @extends('MonitoringTransferRak.app')
 @section('title', 'Dashboard Transfer Rak')
 
+@push('styles')
 <style>
     /* ── RESET KHUSUS DASHBOARD ── */
     body { overflow-y: auto !important; }
@@ -216,6 +217,7 @@
         .dash-title { font-size: 18px; }
     }
 </style>
+@endpush
 
 <div class="dash-wrap">
     {{-- HEADER --}}

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" style="background:#0b1220">
 
 <head>
     <meta charset="UTF-8">
@@ -7,7 +7,8 @@
     <meta name="base-url" content="{{ url('/') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Forklift Monitor')</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    {{-- Critical CSS: dark background sebelum apapun load --}}
+    <style>html,body{background:#0b1220 !important;margin:0}</style>
     <style>
         * {
             margin: 0;
@@ -327,6 +328,7 @@
             }
         }
     </style>
+    @stack('styles')
 </head>
 
 <body>
@@ -373,38 +375,27 @@
                 <span>Input</span>
             </a>
 
-            {{-- HISTORY --}}
-            <a href="#" class="nav-item">
-                <span class="svg-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" />
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                </span>
-                <span>History</span>
-            </a>
-
             {{-- PROFILE --}}
-            <a href="#" class="nav-item">
+              <a href="{{ route('karyawan.index') }}" class="nav-item">
                 <span class="svg-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                         <circle cx="12" cy="7" r="4" />
                     </svg>
                 </span>
-                <span>Profile</span>
+                <span>Karyawan</span>
             </a>
 
-            {{-- REPORT --}}
-            <a href="{{ route('reports.index') }}"
-                class="nav-item {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+            {{-- LAPORAN --}}
+            <a href="{{ route('transfer.laporan') }}"
+                class="nav-item {{ request()->routeIs('transfer.laporan*') ? 'active' : '' }}">
                 <span class="svg-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <path d="M3 3v18h18" />
                         <path d="M7 12l3-3 4 4 6-6" />
                     </svg>
                 </span>
-                <span>Report</span>
+                <span>Laporan</span>
             </a>
 
             {{-- BACK TO MENU --}}
@@ -519,8 +510,8 @@
         });
     </script>
 
-    <script src="{{ asset('js/app.js') }}"></script>
     @yield('scripts')
+    @stack('scripts')
 </body>
 
 </html>

@@ -450,11 +450,6 @@
                 </a>
             @endif
 
-            <a href="{{ route('overtime.index') }}"
-                class="header-nav-link {{ request()->routeIs('overtime.*') ? 'active' : '' }}">
-                <i data-lucide="clock"></i> <span>Lembur</span>
-            </a>
-
             @if (auth()->user()->isAdmin())
                 <a href="{{ route('reports.index') }}"
                     class="header-nav-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
@@ -475,8 +470,7 @@
             <div class="header-avatar">
                 {{ strtoupper(substr(auth()->user()->name ?? 'A', 0, 1)) }}
             </div>
-            <form action="{{ route('logout') }}" method="POST" style="margin:0;">
-                @csrf
+            <form action="{{ route('pilihmenu.index') }}" method="POST" style="margin:0;">
                 <button type="submit" class="btn-header-logout" title="Logout">
                     <i data-lucide="log-out"></i>
                 </button>
@@ -539,8 +533,7 @@
             <div>
                 <div class="mobile-user-name">{{ auth()->user()->name ?? 'Admin' }}</div>
             </div>
-            <form action="{{ route('logout') }}" method="POST" style="margin:0;">
-                @csrf
+            <form action="{{ route('pilihmenu.index') }}" method="POST" style="margin:0;">
                 <button type="submit" class="btn-mobile-logout" title="Logout">
                     <i data-lucide="log-out"></i>
                 </button>

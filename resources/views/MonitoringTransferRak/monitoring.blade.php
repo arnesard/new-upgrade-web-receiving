@@ -2,6 +2,7 @@
 
 @section('title', 'Transfer Rak')
 
+@push('styles')
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -292,6 +293,7 @@
         50%      { box-shadow: 0 6px 30px rgba(34,197,94,0.6), 0 0 0 5px rgba(34,197,94,0.12); }
     }
 </style>
+@endpush
 
 {{-- MODAL PILIH OPERATOR --}}
 <div class="modal-overlay" id="operatorModal">

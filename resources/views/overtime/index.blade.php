@@ -238,83 +238,12 @@
 
 @section('content')
     <div class="p-3 p-md-4 max-w-7xl mx-auto">
-        {{-- Header --}}
-        <div class="mb-4 d-flex justify-content-between align-items-center no-print">
-            <div>
-                <h1 class="h3 fw-bold text-slate-900 mb-1">Pengajuan Lembur</h1>
-                <p class="text-slate-600 mb-0">Catat dan monitor jam lembur karyawan</p>
-            </div>
-        </div>
 
         {{-- Print Only Header --}}
         <div class="print-only text-center">
             <h5 class="fw-bold mb-1" style="font-size: 15px; text-decoration: underline; letter-spacing: 0.5px;">LAPORAN
                 PENGAJUAN LEMBUR</h5>
             <p style="font-size: 11px; color: #475569; margin-bottom: 6px;">Periode: {{ now()->translatedFormat('F Y') }}</p>
-        </div>
-
-        {{-- Stats Cards --}}
-        <div class="row g-3 mb-4 no-print">
-            <div class="col-12 col-md-4">
-                <div class="card h-100 card-vibrant bg-gradient-sky rounded-4 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <p class="text-xs font-bold text-uppercase tracking-wider mb-1">Total Pengajuan</p>
-                                <p class="h2 fw-bold mb-0">{{ $overtimes->count() }}</p>
-                            </div>
-                            <div class="p-3 icon-box-white rounded-circle">
-                                <i data-lucide="calendar" size="24"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4">
-                <div class="card h-100 card-vibrant bg-gradient-success rounded-4 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <p class="text-xs font-bold text-uppercase tracking-wider mb-1">Total Jam</p>
-                                @php
-                                    $totalHours = $overtimes
-                                        ->filter(fn($ot) => $ot->status == 'approved')
-                                        ->sum(function ($ot) {
-                                            $start = \Carbon\Carbon::parse($ot->start_time);
-                                            $end = \Carbon\Carbon::parse($ot->end_time);
-                                            if ($end->lt($start)) {
-                                                $end->addDay();
-                                            }
-                                            $gross = $start->diffInHours($end);
-                                            return min(7, $gross);
-                                        });
-                                @endphp
-                                <p class="h2 fw-bold mb-0">{{ number_format($totalHours, 1) }}</p>
-                            </div>
-                            <div class="p-3 icon-box-white rounded-circle">
-                                <i data-lucide="clock" size="24"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-12 col-md-4">
-                <div class="card h-100 card-vibrant bg-gradient-info rounded-4 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <p class="text-xs font-bold text-uppercase tracking-wider mb-1">Bulan Ini</p>
-                                <p class="h2 fw-bold mb-0 text-capitalize">{{ now()->translatedFormat('F') }}</p>
-                            </div>
-                            <div class="p-3 icon-box-white rounded-circle">
-                                <i data-lucide="calendar" size="24"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="row g-4 mt-2">
